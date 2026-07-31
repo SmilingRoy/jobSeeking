@@ -428,7 +428,7 @@ const seededJobs: Job[] = shanghaiSeedRows.map((row, index) => {
     url,
     status: "new",
     district: "上海",
-    lastVerifiedAt: "2026-07-31",
+    lastVerifiedAt: "待验证",
     responsibilities: `围绕${track}方向负责产品规划、需求分析、方案设计与跨团队落地。`,
     requirements: `${experience}产品经验，${education}及以上学历。`,
   };
@@ -721,7 +721,7 @@ export default function Home() {
 
           <div className="list-toolbar">
             <p>
-              显示 <strong>{evaluatedJobs.length}</strong> 个结果 · 数据更新于 2026-07-31
+              显示 <strong>{evaluatedJobs.length}</strong> 个结果 · 上海样本快照 · 链接以BOSS原页为准
             </p>
             <label>
               排序
