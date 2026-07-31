@@ -354,7 +354,83 @@ const additionalJobs: Job[] = extraSeedRows.map((row, index) => {
   };
 });
 
-const seededJobs = [...initialJobs, ...additionalJobs];
+const shanghaiSeedRows = [
+  ["产品经理", "拓竹科技", 15, 16, "1-3年", "本科", "通用产品", "https://www.zhipin.com/job_detail/fee97d421d67382e0nV639y1F1VT.html"],
+  ["产品经理", "上海国智技术有限公司", 30, 45, "5-10年", "本科", "企业服务 / SaaS", "https://www.zhipin.com/job_detail/a3ef3c45bd477e451HF83Ny4FVBR.html"],
+  ["产品经理", "比瑞吉", 20, 25, "3-5年", "本科", "通用产品", "https://www.zhipin.com/job_detail/47703154a40b35ab0nV52di6GVBR.html"],
+  ["产品经理", "上海行影不离智能科技", 15, 18, "5-10年", "本科", "企业服务 / SaaS", "https://www.zhipin.com/job_detail/a86346e70bd1a57203J939u0FVBX.html"],
+  ["产品经理", "润吧云", 8, 10, "1-3年", "本科", "企业服务 / SaaS", "https://www.zhipin.com/job_detail/12352c7a21ff66a503d409m-FFFW.html"],
+  ["产品经理", "正新集团", 12, 20, "1-3年", "本科", "通用产品", "https://www.zhipin.com/job_detail/4bb45954335188cd1n1z3d6_FlJX.html"],
+  ["产品经理", "上海游盾网络", 15, 20, "3-5年", "本科", "通用产品", "https://www.zhipin.com/job_detail/fdda6b605c894d160nZz3dm8FVJU.html"],
+  ["产品经理", "瑞玞生物", 16, 20, "5-10年", "本科", "通用产品", "https://www.zhipin.com/job_detail/e37d9e1c9e2bef0303R_2tW9EFVX.html"],
+  ["产品经理", "上海昀泓商贸", 13, 25, "3-5年", "本科", "通用产品", "https://www.zhipin.com/job_detail/4bda50b928b81b110nR63N6_FVpX.html"],
+  ["产品经理", "聚水潭", 20, 30, "1-3年", "本科", "企业服务 / SaaS", "https://www.zhipin.com/job_detail/fa1e94a4cbc6361103J42di4EVBW.html"],
+  ["产品经理", "上海大模型生态发展", 15, 20, "3-5年", "硕士", "通用产品", "https://www.zhipin.com/job_detail/1994747471547e950nR709-7EFZU.html"],
+  ["产品经理", "百趣生物", 13, 25, "1-3年", "本科", "企业服务 / SaaS", "https://www.zhipin.com/job_detail/f398cb405808616a0nZ63NW1F1FW.html"],
+  ["产品经理", "超星集团上海分公司", 15, 20, "3-5年", "本科", "通用产品", "https://www.zhipin.com/job_detail/1ecd4efb6f31a8081XB-29W5GVRZ.html"],
+  ["产品经理", "柠季", 11, 20, "不限", "本科", "通用产品", "https://www.zhipin.com/job_detail/78d2c78d3d80acbc0nV43du4EVdR.html"],
+  ["产品经理", "海康威视", 25, 50, "5-10年", "本科", "企业服务 / SaaS", "https://www.zhipin.com/job_detail/55907e33b0f9b33c1X142NW5GVVR.html"],
+  ["产品经理", "上海萃绩科技有限公司", 50, 80, "5-10年", "硕士", "企业服务 / SaaS", "https://www.zhipin.com/job_detail/37c1b6036a876cda1Hxy29S7FVBQ.html"],
+  ["产品经理", "盈力", 18, 25, "3-5年", "本科", "AI / 大模型", "https://www.zhipin.com/job_detail/b90dd06fcc02b90d0nd_29q4GFBQ.html"],
+  ["产品经理", "北京青葵智造科技", 12, 20, "3-5年", "不限", "通用产品", "https://www.zhipin.com/job_detail/127dc41110b6b16003153di4FFRY.html"],
+  ["产品经理", "曼玲粥铺", 15, 30, "5-10年", "本科", "通用产品", "https://www.zhipin.com/job_detail/8f075f22ed9d0f7d03d509u0FlVR.html"],
+  ["产品经理", "上海鸣志", 35, 45, "5-10年", "本科", "通用产品", "https://www.zhipin.com/job_detail/a92fd701a63a208a0nd92965EVJV.html"],
+  ["AI产品经理", "上海软科", 20, 35, "3-5年", "本科", "AI / 大模型", "https://www.zhipin.com/job_detail/a46277d967a057fa0nBz29S9EFZT.html"],
+  ["AI产品经理", "MobTech", 20, 28, "3-5年", "本科", "AI / 大模型", "https://www.zhipin.com/job_detail/4a5e8c92c86e29b40nd63di8FFRR.html"],
+  ["AI产品经理", "在途商旅", 12, 20, "不限", "本科", "AI / 大模型", "https://www.zhipin.com/job_detail/306d001f442179db0nVy29W9EFpR.html"],
+  ["AI产品经理", "毕毕", 10, 15, "1年以内", "本科", "AI / 大模型", "https://www.zhipin.com/job_detail/cfb52054c2d8c04203J_2t28E1BY.html"],
+  ["AI产品经理", "声网", 25, 45, "经验不限", "本科", "AI / 大模型", "https://www.zhipin.com/job_detail/ee6f09619bac04f403d40tq1FVtX.html"],
+  ["AI产品经理", "傲拓思", 20, 40, "1-3年", "本科", "AI / 大模型", "https://www.zhipin.com/job_detail/d038398b116267120nZ53NS0F1JT.html"],
+  ["AI产品经理", "行风", 20, 35, "5-10年", "本科", "AI / 大模型", "https://www.zhipin.com/job_detail/5ca7a47c268ddcae0nd_39q0F1RR.html"],
+  ["AI产品经理", "倍通数据集团", 15, 25, "3-5年", "本科", "AI / 大模型", "https://www.zhipin.com/job_detail/1707aba18d2b6ebf0nVz39-7E1BS.html"],
+  ["AI产品经理", "恋之翼", 25, 40, "3-5年", "本科", "AI / 大模型", "https://www.zhipin.com/job_detail/964ab214710aaed503170t2_FlJS.html"],
+  ["AI数据产品经理", "中科创达", 30, 35, "3-5年", "本科", "数据产品", "https://www.zhipin.com/job_detail/62f6cb220a400f4a0nV52dy9EFdV.html"],
+  ["AI数据产品经理", "澳鹏科技", 45, 75, "3-5年", "本科", "数据产品", "https://www.zhipin.com/job_detail/306ecad862933f7b0nB83Ny8F1BV.html"],
+  ["AI数据产品经理（专利方向）", "得物App", 25, 40, "1-3年", "本科", "数据产品", "https://www.zhipin.com/job_detail/927004d06bba563e0nZy3Ni1GVRW.html"],
+  ["AI大模型数据产品经理（医药行业）", "八月瓜科技", 15, 20, "5-10年", "硕士", "数据产品", "https://www.zhipin.com/job_detail/fd70337e8928d438031-096_EVRZ.html"],
+  ["AI数据分析产品经理", "循环智能", 25, 35, "3-5年", "本科", "数据产品", "https://www.zhipin.com/job_detail/2d7567b7861c7ad50nB42dW0FFRX.html"],
+  ["AI视频数据集开发产品经理", "慧神笔", 10, 15, "3-5年", "大专", "数据产品", "https://www.zhipin.com/job_detail/6bd79e6ed85dfbf90nd92tq_F1FS.html"],
+  ["AI产品经理（工业大数据方向）", "优层智能科技", 15, 30, "3-5年", "本科", "数据产品", "https://www.zhipin.com/job_detail/6938334976d829590nB42dW0FFFY.html"],
+  ["AI产品经理（空间智能、三维数据方向）", "PKPM构力科技", 15, 20, "不限", "本科", "数据产品", "https://www.zhipin.com/job_detail/506fc0c9e3e9aec30nd63t68EVpS.html"],
+  ["Code Agent训练产品经理-AI数据与安全", "字节跳动", 40, 70, "3-5年", "本科", "数据产品", "https://www.zhipin.com/job_detail/a3aa3f32d04f64ca0nd_2tS1FVFQ.html"],
+  ["数据AI产品经理", "上海即信数科", 20, 40, "5-10年", "本科", "数据产品", "https://www.zhipin.com/job_detail/7bff0025167e8bac0nd809i9E1pZ.html"],
+  ["高级ai产品经理（AI医疗科研数据）", "北京京卫智云科技", 8, 12, "3-5年", "本科", "数据产品", "https://www.zhipin.com/job_detail/16549e098171e19d0nB73t20E1VU.html"],
+  ["AI数据产品负责人", "上海掌之淘信息技术", 35, 60, "5-10年", "本科", "数据产品", "https://www.zhipin.com/job_detail/761072d2ebcc38fa0ndy2N69GFpS.html"],
+  ["AI Agent产品经理（评测方向）", "锐捷网络", 25, 45, "3-5年", "本科", "AI / 大模型", "https://www.zhipin.com/job_detail/7802ce118c14ded40nF42Ni9FlpR.html"],
+  ["ai产品经理", "梵住传媒", 16, 22, "3-5年", "本科", "AI / 大模型", "https://www.zhipin.com/job_detail/ccf87f34b93a92760ndz09q8FVBZ.html"],
+  ["AI高级产品经理", "上海中城交科技", 30, 45, "5-10年", "本科", "AI / 大模型", "https://www.zhipin.com/job_detail/0d0f9407cc6d617503Fz3dq4F1BQ.html"],
+  ["AI及量化策略产品经理", "大智慧", 30, 50, "3-5年", "硕士", "AI / 大模型", "https://www.zhipin.com/job_detail/fd424840134151bc03B839u1FlRW.html"],
+  ["AI产品经理（智能体方向）", "SenseTime", 20, 25, "3-5年", "本科", "AI / 大模型", "https://www.zhipin.com/job_detail/f4dd85f4b0f4b1930nVy2Ni7FlFV.html"],
+  ["AI产品经理（线路规划方向）", "携程集团", 30, 60, "5-10年", "本科", "AI / 大模型", "https://www.zhipin.com/job_detail/a408626aca496c49031529S4EVZR.html"],
+  ["数据AI产品经理", "玛丽黛佳", 28, 35, "5-10年", "本科", "数据产品", "https://www.zhipin.com/job_detail/14b38d5cbb00697303B62N60F1BU.html"],
+  ["ai产品经理", "葵铭", 18, 25, "3-5年", "本科", "AI / 大模型", "https://www.zhipin.com/job_detail/c6423190c51fbf1903R53Nu6FVVY.html"],
+  ["AI产品经理", "深演智能", 25, 40, "3-5年", "本科", "AI / 大模型", "https://www.zhipin.com/job_detail/bd03654d2db512f103R92t-_GVNZ.html"],
+  ["AI产品经理", "上海福芮柚科技", 23, 35, "5-10年", "本科", "AI / 大模型", "https://www.zhipin.com/job_detail/3310b4168a1a15e503F439q4F1ZU.html"],
+] as const;
+
+const seededJobs: Job[] = shanghaiSeedRows.map((row, index) => {
+  const [title, company, salaryMin, salaryMax, experience, education, track, url] = row;
+  return {
+    id: index + 1,
+    title,
+    company,
+    city: "上海",
+    salaryMin,
+    salaryMax,
+    experience,
+    education,
+    companySize: "公开页面未标注",
+    industry: track === "AI / 大模型" ? "人工智能" : track === "数据产品" ? "互联网 / 数据" : "互联网",
+    track,
+    workMode: "线下",
+    description: `来自 BOSS 公开上海职位摘要：${title}，围绕${track}方向负责产品规划、需求分析与落地。`,
+    tags: [track, "上海", "产品经理"],
+    postedAt: "公开页抓取",
+    source: "BOSS直聘上海公开职位详情",
+    url,
+    status: "new",
+  };
+});
 
 const defaultFilters: Filters = {
   search: "",
@@ -368,7 +444,7 @@ const defaultFilters: Filters = {
   workMode: "全部方式",
 };
 
-const DATA_VERSION = "product-manager-2026-07-31-v4";
+const DATA_VERSION = "product-manager-shanghai-2026-07-31-v5";
 
 const cityOptions = ["上海"];
 const trackOptions = ["全部方向", "AI / 大模型", "数据产品", "增长 / 用户", "商业化 / B端", "企业服务 / SaaS"];
