@@ -282,7 +282,7 @@ const initialJobs: Job[] = [
 
 const defaultFilters: Filters = {
   search: "",
-  cities: ["北京", "上海", "杭州", "深圳"],
+  cities: ["上海"],
   salaryMin: 15,
   experience: "不限",
   education: "不限",
@@ -291,6 +291,8 @@ const defaultFilters: Filters = {
   track: "全部方向",
   workMode: "全部方式",
 };
+
+const DATA_VERSION = "product-manager-2026-07-31-v2";
 
 const statusOptions: { value: JobStatus; label: string }[] = [
   { value: "new", label: "待查看" },
@@ -399,10 +401,17 @@ export default function Home() {
 
   useEffect(() => {
     try {
+      const savedVersion = window.localStorage.getItem("job-lens-data-version");
       const savedJobs = window.localStorage.getItem("job-lens-jobs");
       const savedFilters = window.localStorage.getItem("job-lens-filters");
-      if (savedJobs) setJobs(JSON.parse(savedJobs));
-      if (savedFilters) setFilters({ ...defaultFilters, ...JSON.parse(savedFilters) });
+      if (savedVersion === DATA_VERSION) {
+        if (savedJobs) setJobs(JSON.parse(savedJobs));
+        if (savedFilters) setFilters({ ...defaultFilters, ...JSON.parse(savedFilters) });
+      } else {
+        setJobs(initialJobs);
+        setFilters(defaultFilters);
+        window.localStorage.setItem("job-lens-data-version", DATA_VERSION);
+      }
     } catch {
       // Keep the demo state when stored data is unavailable.
     }
@@ -413,6 +422,7 @@ export default function Home() {
     if (!hydrated) return;
     window.localStorage.setItem("job-lens-jobs", JSON.stringify(jobs));
     window.localStorage.setItem("job-lens-filters", JSON.stringify(filters));
+    window.localStorage.setItem("job-lens-data-version", DATA_VERSION);
   }, [jobs, filters, hydrated]);
 
   const evaluatedJobs = useMemo(() => {
