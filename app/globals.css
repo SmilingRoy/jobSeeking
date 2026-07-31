@@ -645,6 +645,12 @@ p {
   padding: 5px 8px;
 }
 
+.source-line {
+  color: var(--muted);
+  font-size: 11px;
+  margin: 12px 0 0;
+}
+
 .score-panel {
   align-items: center;
   background: #f7faf8;
