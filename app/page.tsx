@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
-type JobStatus = "new" | "saved" | "applied" | "interview" | "ignored";
+type JobStatus = "new" | "ignored";
 
 type Job = {
   id: number;
@@ -76,7 +76,7 @@ const initialJobs: Job[] = [
     postedAt: "今日抓取",
     source: "BOSS直聘·产品经理",
     url: "https://www.zhipin.com/zhaopin/32a66c074d2737e61nd42dS8/",
-    status: "saved",
+    status: "new",
   },
   {
     id: 3,
@@ -96,7 +96,7 @@ const initialJobs: Job[] = [
     postedAt: "今日抓取",
     source: "BOSS直聘·商业产品经理",
     url: "https://www.zhipin.com/zhaopin/90089f4c8f066b020XBy39i8/",
-    status: "applied",
+    status: "new",
   },
   {
     id: 4,
@@ -136,7 +136,7 @@ const initialJobs: Job[] = [
     postedAt: "3天前",
     source: "BOSS直聘·商业产品经理",
     url: "https://www.zhipin.com/zhaopin/90089f4c8f066b020XBy39i8/",
-    status: "interview",
+    status: "new",
   },
   {
     id: 6,
@@ -175,7 +175,7 @@ const initialJobs: Job[] = [
     tags: ["流量策略", "广告", "AB实验", "商业化"],
     postedAt: "3天前",
     source: "BOSS直聘·商业产品经理",
-    url: "https://www.zhipin.com/zhaopin/90089f4c8f066b020XBy39i8/",
+    url: "https://www.zhipin.com/job_detail/afcf9c2a447047340nd53N27GFtS.html",
     status: "new",
   },
   {
@@ -280,6 +280,82 @@ const initialJobs: Job[] = [
   },
 ];
 
+const extraSeedRows = [
+  ["AI 产品经理", "德勤", "南京", 35, 65, "5-10年", "本科", "AI / 大模型", "https://www.zhipin.com/job_detail/eebc39dced94a2b20nV62ty-EFVX.html"],
+  ["AI 产品经理", "鱼跃医疗", "郑州", 12, 20, "3-5年", "硕士", "AI / 大模型", "https://www.zhipin.com/job_detail/dfba6076b02974dc0ndz2tq6F1BU.html"],
+  ["AI 产品经理", "畅威物联网", "深圳", 18, 26, "5-10年", "本科", "AI / 大模型", "https://www.zhipin.com/job_detail/22d300c587e3acb703dz3t-0GFNQ.html"],
+  ["AI 产品经理", "法狗狗", "襄阳", 4, 8, "1-3年", "本科", "AI / 大模型", "https://www.zhipin.com/job_detail/fa78ad2bbf663bfb03N90t24ElZR.html"],
+  ["AI 产品经理", "云溪数科", "北京", 20, 40, "3-5年", "本科", "AI / 大模型", "https://www.zhipin.com/job_detail/939e7590bdc1060f0ndy3d28FFBS.html"],
+  ["AI 产品经理", "Looki", "北京", 30, 60, "5-10年", "本科", "AI / 大模型", "https://www.zhipin.com/job_detail/0d6c3a2b06b2d5f20nV92dS5E1tQ.html"],
+  ["AI 产品经理", "熙软科技", "上海", 23, 35, "5-10年", "本科", "AI / 大模型", "https://www.zhipin.com/job_detail/3310b4168a1a15e503F439q4F1ZU.html"],
+  ["AI 产品经理", "杭州探索未来智能", "杭州", 10, 15, "在校/应届", "本科", "AI / 大模型", "https://www.zhipin.com/job_detail/b0728d94fe54880403192d-1GFFV.html"],
+  ["AI 产品经理", "乐薇", "武汉", 25, 35, "1-3年", "本科", "AI / 大模型", "https://www.zhipin.com/job_detail/b827fcd5131b53280nd90tW7GFpZ.html"],
+  ["AI 产品经理", "记忆张量", "上海", 20, 40, "1-3年", "本科", "AI / 大模型", "https://www.zhipin.com/job_detail/ca9bec8d18e4cd720nZ62d-1FVtS.html"],
+  ["AI 产品经理", "上海福芮柚科技", "上海", 23, 30, "3-5年", "本科", "AI / 大模型", "https://www.zhipin.com/job_detail/f706223f4674e9270nV42dq4EFZU.html"],
+  ["AI 产品经理", "xmind", "深圳", 18, 28, "3-5年", "本科", "AI / 大模型", "https://www.zhipin.com/job_detail/f24fa8317906565a0nd529-4EFNR.html"],
+  ["AI 产品经理", "上海万联易算技术", "上海", 13, 18, "3-5年", "本科", "AI / 大模型", "https://www.zhipin.com/job_detail/e861c51c8a2aa9d903x83968FVtY.html"],
+  ["AI 产品经理", "灵匠科技杭州分公司", "杭州", 13, 20, "3-5年", "本科", "AI / 大模型", "https://www.zhipin.com/job_detail/94e9f80263b3d1761HNy3Ni1E1RR.html"],
+  ["数据产品经理", "路特创新", "杭州", 25, 35, "1-3年", "本科", "数据产品", "https://www.zhipin.com/job_detail/94876f4683bbb3150nd83d6_GFJQ.html"],
+  ["数据产品经理", "钛动科技", "苏州", 14, 28, "3-5年", "本科", "数据产品", "https://www.zhipin.com/job_detail/49865e250ae532060nZ_3tu4GVFQ.html"],
+  ["数据产品经理", "大健云仓科技", "北京", 20, 35, "1-3年", "本科", "数据产品", "https://www.zhipin.com/job_detail/88d25c56042606ec0ndz0t-7F1BX.html"],
+  ["数据产品经理", "元保数科", "苏州", 10, 12, "3-5年", "本科", "数据产品", "https://www.zhipin.com/job_detail/3340a63daa80a63c1XB83t6-E1JZ.html"],
+  ["数据产品经理", "熵智信息科技", "深圳", 15, 30, "不限", "本科", "数据产品", "https://www.zhipin.com/job_detail/d4aad34e3049b2a10nZ-3dS-EVNZ.html"],
+  ["数据产品经理", "韶音科技", "北京", 10, 11, "3-5年", "大专", "数据产品", "https://www.zhipin.com/job_detail/b2d5197ad4f1e45c0nJ70t25F1dR.html"],
+  ["数据产品经理", "零跑科技", "杭州", 25, 35, "5-10年", "本科", "数据产品", "https://www.zhipin.com/job_detail/42aabc4af31626c20nZ83t26EFpT.html"],
+  ["数据产品经理", "深圳市云元智域科技", "深圳", 15, 25, "5-10年", "本科", "数据产品", "https://www.zhipin.com/job_detail/f0f1b59d69653dab0nB_3Ny5FFBX.html"],
+  ["数据产品经理", "旗天科技", "上海", 20, 30, "5-10年", "本科", "数据产品", "https://www.zhipin.com/job_detail/430a7343ec6b72280nVy3d29FlBV.html"],
+  ["数据产品经理", "灏仟亿科技集团", "广州", 18, 35, "5-10年", "本科", "数据产品", "https://www.zhipin.com/job_detail/e6f1e3fdc8c0dcc30nd90tu7FlBY.html"],
+  ["数据产品经理", "北京龙腾微时代", "北京", 12, 18, "5-10年", "本科", "数据产品", "https://www.zhipin.com/job_detail/74f83e7e9d09554b0nd70ti1GVJX.html"],
+  ["数据产品经理", "京东集团", "北京", 30, 40, "5-10年", "本科", "数据产品", "https://www.zhipin.com/job_detail/e1af6815027ed47403N92tu-F1tT.html"],
+  ["数据产品经理", "朴朴超市", "上海", 25, 35, "3-5年", "本科", "数据产品", "https://www.zhipin.com/job_detail/7cca97f91b3d2d4b1Hdy09S0GFZS.html"],
+  ["数据产品经理", "美云", "佛山", 12, 17, "3-5年", "大专", "数据产品", "https://www.zhipin.com/job_detail/959cf13cec185b570nB83tu4FFVR.html"],
+  ["数据产品经理", "每日互动", "杭州", 15, 30, "3-5年", "本科", "数据产品", "https://www.zhipin.com/job_detail/07555c5f716e775103x42du5ElpS.html"],
+  ["数据产品经理", "优财云链", "杭州", 15, 25, "3-5年", "本科", "数据产品", "https://www.zhipin.com/job_detail/9be57a6b367ec5021X182Nq4FlJX.html"],
+  ["数据产品经理", "锐捷网络", "北京", 20, 40, "5-10年", "本科", "数据产品", "https://www.zhipin.com/job_detail/693a8b39b910f05a03d80tu-GVtU.html"],
+  ["数据产品经理", "滴滴出行", "北京", 25, 40, "3-5年", "本科", "数据产品", "https://www.zhipin.com/job_detail/89046fc55f623bc403V53d-4F1NU.html"],
+  ["数据产品经理", "贝壳找房", "北京", 25, 40, "3-5年", "本科", "数据产品", "https://www.zhipin.com/job_detail/8bf2f4d9dd910cd403F_3tS_GFBU.html"],
+  ["商业产品经理", "斗象科技", "上海", 25, 35, "5-10年", "本科", "商业化 / B端", "https://www.zhipin.com/job_detail/15fbff1bcfb3d63b0nVz2t-0GVFS.html"],
+  ["商业产品经理", "百路科技", "深圳", 30, 40, "5-10年", "本科", "商业化 / B端", "https://www.zhipin.com/job_detail/349e4d0e8c11b25c0nZ92t2_EldZ.html"],
+  ["商业产品经理", "才课教育", "北京", 25, 50, "3-5年", "本科", "商业化 / B端", "https://www.zhipin.com/job_detail/0cc9258c0a752c0f031929q8FVVT.html"],
+  ["商业产品经理", "vivo", "深圳", 30, 60, "5-10年", "本科", "商业化 / B端", "https://www.zhipin.com/job_detail/1ac74a12fc29a8b60nB639y9GVFZ.html"],
+  ["商业产品经理", "丰图科技", "深圳", 18, 23, "3-5年", "本科", "商业化 / B端", "https://www.zhipin.com/job_detail/db009fb0a15366a603Z52tW8GFNV.html"],
+  ["商业产品经理", "汽车之家", "深圳", 20, 40, "3-5年", "本科", "商业化 / B端", "https://www.zhipin.com/job_detail/208de709b7b3b3ab0nFz3tq1EFdQ.html"],
+  ["商业产品经理", "360集团", "北京", 15, 25, "3-5年", "本科", "商业化 / B端", "https://www.zhipin.com/job_detail/d3465712dfeb9ad003R42tq5EFRZ.html"],
+  ["商业产品经理", "一亩田", "北京", 20, 40, "3-5年", "本科", "商业化 / B端", "https://www.zhipin.com/job_detail/5318a84cdad5260b03F-3d60FVVU.html"],
+  ["流量策略商业产品经理", "bilibili", "上海", 30, 60, "5-10年", "本科", "商业化 / B端", "https://www.zhipin.com/job_detail/afcf9c2a447047340nd53N27GFtS.html"],
+  ["商业产品经理（版权策略方向）", "快手", "北京", 25, 50, "3-5年", "本科", "商业化 / B端", "https://www.zhipin.com/job_detail/5c695676f3cd53a01nF829m6ElBS.html"],
+  ["商业化产品经理", "速境生活科技", "深圳", 20, 40, "5-10年", "本科", "商业化 / B端", "https://www.zhipin.com/job_detail/8ebafb92b30111dd0nd_29W0FFtT.html"],
+  ["商业化产品经理", "网易", "杭州", 26, 45, "5-10年", "本科", "商业化 / B端", "https://www.zhipin.com/job_detail/fb05588f502c55090nd-0tu4EFBQ.html"],
+  ["产品经理", "BOSS直聘", "北京", 30, 40, "3-5年", "本科", "通用产品", "https://www.zhipin.com/job_detail/8d224b383cf0741f0nR62Nq6FVdS.html"],
+  ["风控策略产品经理", "BOSS直聘", "北京", 15, 25, "1-3年", "本科", "企业服务 / SaaS", "https://www.zhipin.com/job_detail/b15d71ff1366615b0ndy0tW9F1FX.html"],
+] as const;
+
+const additionalJobs: Job[] = extraSeedRows.map((row, index) => {
+  const [title, company, city, salaryMin, salaryMax, experience, education, track, url] = row;
+  return {
+    id: index + 13,
+    title,
+    company,
+    city,
+    salaryMin,
+    salaryMax,
+    experience,
+    education,
+    companySize: "公开页面未标注",
+    industry: track === "AI / 大模型" ? "人工智能" : track === "数据产品" ? "互联网 / 数据" : "互联网",
+    track,
+    workMode: "线下",
+    description: `来自 BOSS 公开职位摘要：${title}，围绕${track}方向负责产品规划、需求分析与跨团队落地。`,
+    tags: [track, "需求分析", "产品规划"],
+    postedAt: "公开页抓取",
+    source: "BOSS直聘公开职位详情",
+    url,
+    status: "new",
+  };
+});
+
+const seededJobs = [...initialJobs, ...additionalJobs];
+
 const defaultFilters: Filters = {
   search: "",
   cities: ["上海"],
@@ -292,25 +368,9 @@ const defaultFilters: Filters = {
   workMode: "全部方式",
 };
 
-const DATA_VERSION = "product-manager-2026-07-31-v2";
+const DATA_VERSION = "product-manager-2026-07-31-v4";
 
-const statusOptions: { value: JobStatus; label: string }[] = [
-  { value: "new", label: "待查看" },
-  { value: "saved", label: "已收藏" },
-  { value: "applied", label: "已投递" },
-  { value: "interview", label: "面试中" },
-  { value: "ignored", label: "不合适" },
-];
-
-const statusLabels: Record<JobStatus, string> = {
-  new: "待查看",
-  saved: "已收藏",
-  applied: "已投递",
-  interview: "面试中",
-  ignored: "不合适",
-};
-
-const cityOptions = ["北京", "上海", "杭州", "深圳", "广州", "佛山", "苏州"];
+const cityOptions = ["上海"];
 const trackOptions = ["全部方向", "AI / 大模型", "数据产品", "增长 / 用户", "商业化 / B端", "企业服务 / SaaS"];
 const workModeOptions = ["全部方式", "线下", "远程"];
 
@@ -389,9 +449,8 @@ function parseJobText(text: string, nextId: number): Job {
 }
 
 export default function Home() {
-  const [jobs, setJobs] = useState<Job[]>(initialJobs);
+  const [jobs, setJobs] = useState<Job[]>(seededJobs);
   const [filters, setFilters] = useState<Filters>(defaultFilters);
-  const [activeStatus, setActiveStatus] = useState<JobStatus | "all">("all");
   const [sortBy, setSortBy] = useState<"score" | "salary">("score");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -408,7 +467,7 @@ export default function Home() {
         if (savedJobs) setJobs(JSON.parse(savedJobs));
         if (savedFilters) setFilters({ ...defaultFilters, ...JSON.parse(savedFilters) });
       } else {
-        setJobs(initialJobs);
+        setJobs(seededJobs);
         setFilters(defaultFilters);
         window.localStorage.setItem("job-lens-data-version", DATA_VERSION);
       }
@@ -427,44 +486,32 @@ export default function Home() {
 
   const evaluatedJobs = useMemo(() => {
     const search = filters.search.trim().toLowerCase();
-    const excluded = splitKeywords(filters.excludeKeywords);
 
     return jobs
       .map((job) => {
         const haystack =
           `${job.title} ${job.company} ${job.description} ${job.tags.join(" ")}`.toLowerCase();
         const { score, matched } = getScore(job, filters);
-        const rejectedBy = [
-          filters.cities.length && !filters.cities.includes(job.city) ? "城市" : "",
-          job.salaryMax > 0 && job.salaryMax < filters.salaryMin ? "薪资" : "",
-          filters.track !== "全部方向" && job.track !== filters.track ? "方向" : "",
-          filters.workMode !== "全部方式" && job.workMode !== filters.workMode ? "方式" : "",
-          excluded.some((keyword) => haystack.includes(keyword)) ? "排除词" : "",
-        ].filter(Boolean);
-
-        return { ...job, score, matched, rejectedBy };
+        return { ...job, score, matched, haystack };
       })
       .filter((job) => {
-        const haystack = `${job.title} ${job.company} ${job.tags.join(" ")}`.toLowerCase();
-        const searchMatches = !search || haystack.includes(search);
-        const statusMatches = activeStatus === "all" || job.status === activeStatus;
-        const experienceMatches = filters.experience === "不限" || job.experience === filters.experience;
-        const educationMatches = filters.education === "不限" || job.education === filters.education;
-        return searchMatches && statusMatches && experienceMatches && educationMatches;
+        const titleMatches = !search || job.title.toLowerCase().includes(search);
+        const cityMatches = filters.cities.includes(job.city);
+        const trackMatches = filters.track === "全部方向" || job.track === filters.track;
+        return titleMatches && cityMatches && trackMatches;
       })
       .sort((a, b) =>
         sortBy === "score" ? b.score - a.score : b.salaryMax - a.salaryMax,
       );
-  }, [jobs, filters, activeStatus, sortBy]);
+  }, [jobs, filters, sortBy]);
 
-  const matchingCount = evaluatedJobs.filter((job) => job.rejectedBy.length === 0).length;
-  const savedCount = jobs.filter((job) => job.status === "saved").length;
-  const appliedCount = jobs.filter((job) =>
-    ["applied", "interview"].includes(job.status),
-  ).length;
+  const matchingCount = evaluatedJobs.length;
+  const viewedCount = jobs.filter((job) => job.status === "ignored").length;
 
-  const updateJobStatus = (id: number, status: JobStatus) => {
-    setJobs((current) => current.map((job) => (job.id === id ? { ...job, status } : job)));
+  const toggleViewed = (id: number) => {
+    setJobs((current) => current.map((job) =>
+      job.id === id ? { ...job, status: job.status === "ignored" ? "new" : "ignored" } : job,
+    ));
   };
 
   const toggleCity = (city: string) => {
@@ -489,10 +536,9 @@ export default function Home() {
   };
 
   const resetDemo = () => {
-    setJobs(initialJobs);
+    setJobs(seededJobs);
     setFilters(defaultFilters);
-    setActiveStatus("all");
-    setNotice("示例数据已恢复");
+    setNotice("最新岗位样本已恢复");
     window.setTimeout(() => setNotice(""), 2600);
   };
 
@@ -566,59 +612,6 @@ export default function Home() {
             </div>
           </fieldset>
 
-          <label className="field salary-field">
-            <span>
-              最低月薪 <strong>{filters.salaryMin}K</strong>
-            </span>
-            <input
-              type="range"
-              min="10"
-              max="50"
-              step="2"
-              value={filters.salaryMin}
-              onChange={(event) =>
-                setFilters((current) => ({
-                  ...current,
-                  salaryMin: Number(event.target.value),
-                }))
-              }
-            />
-            <span className="range-labels">
-              <small>10K</small>
-              <small>50K+</small>
-            </span>
-          </label>
-
-          <label className="field">
-            <span>工作经验</span>
-            <select
-              value={filters.experience}
-              onChange={(event) =>
-                setFilters((current) => ({ ...current, experience: event.target.value }))
-              }
-            >
-              <option>不限</option>
-              <option>1-3年</option>
-              <option>3-5年</option>
-              <option>5-10年</option>
-            </select>
-          </label>
-
-          <label className="field">
-            <span>学历要求</span>
-            <select
-              value={filters.education}
-              onChange={(event) =>
-                setFilters((current) => ({ ...current, education: event.target.value }))
-              }
-            >
-              <option>不限</option>
-              <option>大专</option>
-              <option>本科</option>
-              <option>硕士</option>
-            </select>
-          </label>
-
           <label className="field">
             <span>产品方向</span>
             <select
@@ -629,46 +622,6 @@ export default function Home() {
             >
               {trackOptions.map((track) => <option key={track}>{track}</option>)}
             </select>
-          </label>
-
-          <label className="field">
-            <span>工作方式</span>
-            <select
-              value={filters.workMode}
-              onChange={(event) =>
-                setFilters((current) => ({ ...current, workMode: event.target.value }))
-              }
-            >
-              {workModeOptions.map((mode) => <option key={mode}>{mode}</option>)}
-            </select>
-          </label>
-
-          <label className="field">
-            <span>偏好关键词</span>
-            <input
-              value={filters.includeKeywords}
-              onChange={(event) =>
-                setFilters((current) => ({
-                  ...current,
-                  includeKeywords: event.target.value,
-                }))
-              }
-              placeholder="逗号分隔"
-            />
-          </label>
-
-          <label className="field">
-            <span>排除关键词</span>
-            <input
-              value={filters.excludeKeywords}
-              onChange={(event) =>
-                setFilters((current) => ({
-                  ...current,
-                  excludeKeywords: event.target.value,
-                }))
-              }
-              placeholder="例如 外包、出差"
-            />
           </label>
 
           <div className="panel-foot">
@@ -694,7 +647,7 @@ export default function Home() {
               <h1>
                 今天有 <em>{matchingCount}</em> 个职位值得看
               </h1>
-              <p>已更新一批公开可见的“产品经理”岗位，按方向、城市、薪资和经验筛选。</p>
+              <p>公开可见的产品经理岗位样本，默认只看上海，可按方向和岗位名称快速收窄。</p>
             </div>
             <div className="metric-row" aria-label="职位统计">
               <div className="metric">
@@ -706,35 +659,15 @@ export default function Home() {
                 <span>符合条件</span>
               </div>
               <div className="metric">
-                <strong>{savedCount}</strong>
-                <span>已收藏</span>
+                <strong>{viewedCount}</strong>
+                <span>已看（灰显）</span>
               </div>
               <div className="metric">
-                <strong>{appliedCount}</strong>
-                <span>投递进展</span>
+                <strong>上海</strong>
+                <span>当前城市</span>
               </div>
             </div>
           </div>
-
-          <nav className="job-tabs" aria-label="职位状态筛选">
-            <button
-              className={activeStatus === "all" ? "active" : ""}
-              onClick={() => setActiveStatus("all")}
-            >
-              全部
-              <span>{jobs.length}</span>
-            </button>
-            {statusOptions.slice(0, 4).map((status) => (
-              <button
-                key={status.value}
-                className={activeStatus === status.value ? "active" : ""}
-                onClick={() => setActiveStatus(status.value)}
-              >
-                {status.label}
-                <span>{jobs.filter((job) => job.status === status.value).length}</span>
-              </button>
-            ))}
-          </nav>
 
           <div className="list-toolbar">
             <p>
@@ -751,17 +684,14 @@ export default function Home() {
 
           <div className="job-list">
             {evaluatedJobs.map((job) => {
-              const isRejected = job.rejectedBy.length > 0;
+              const isViewed = job.status === "ignored";
               return (
-                <article className={`job-card ${isRejected ? "is-rejected" : ""}`} key={job.id}>
+                <article className={`job-card ${isViewed ? "is-rejected" : ""}`} key={job.id}>
                   <div className="job-main">
                     <div className="job-title-row">
                       <div>
                         <div className="job-title-line">
                           <h3>{job.title}</h3>
-                          <span className={`status-tag status-${job.status}`}>
-                            {statusLabels[job.status]}
-                          </span>
                         </div>
                     <p className="company-line">
                           {job.company}
@@ -797,15 +727,15 @@ export default function Home() {
                   </div>
 
                   <div className="score-panel">
-                    <div className={`score-ring ${isRejected ? "score-muted" : ""}`}>
-                      <strong>{isRejected ? "—" : job.score}</strong>
-                      <span>{isRejected ? "已过滤" : "匹配度"}</span>
+                    <div className={`score-ring ${isViewed ? "score-muted" : ""}`}>
+                      <strong>{isViewed ? "✓" : job.score}</strong>
+                      <span>{isViewed ? "已看" : "匹配度"}</span>
                     </div>
                     <div className="match-reason">
-                      {isRejected ? (
+                      {isViewed ? (
                         <p>
                           <span className="reason-dot reason-muted" />
-                          不符合：{job.rejectedBy.join("、")}
+                          已标记，点击可恢复
                         </p>
                       ) : (
                         <>
@@ -822,19 +752,15 @@ export default function Home() {
                     </div>
                     <div className="card-actions">
                       <a className="button button-ghost" href={job.url} target="_blank" rel="noreferrer">
-                        查看原职位 ↗
+                        打开 BOSS 详情 ↗
                       </a>
-                      <select
-                        value={job.status}
-                        onChange={(event) => updateJobStatus(job.id, event.target.value as JobStatus)}
-                        aria-label={`更新 ${job.title} 的状态`}
+                      <button
+                        className="button button-secondary"
+                        onClick={() => toggleViewed(job.id)}
+                        aria-label={`${isViewed ? "恢复" : "标记已看"} ${job.title}`}
                       >
-                        {statusOptions.map((status) => (
-                          <option key={status.value} value={status.value}>
-                            {status.label}
-                          </option>
-                        ))}
-                      </select>
+                        {isViewed ? "恢复显示" : "标记已看"}
+                      </button>
                     </div>
                   </div>
                 </article>
