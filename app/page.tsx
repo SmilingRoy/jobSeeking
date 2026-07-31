@@ -23,18 +23,16 @@ type Job = {
   postedAt: string;
   url: string;
   status: JobStatus;
+  district?: string;
+  lastVerifiedAt?: string;
+  responsibilities?: string;
+  requirements?: string;
 };
 
 type Filters = {
   search: string;
   cities: string[];
-  salaryMin: number;
-  experience: string;
-  education: string;
-  includeKeywords: string;
-  excludeKeywords: string;
   track: string;
-  workMode: string;
 };
 
 const initialJobs: Job[] = [
@@ -429,44 +427,38 @@ const seededJobs: Job[] = shanghaiSeedRows.map((row, index) => {
     source: "BOSS直聘上海公开职位详情",
     url,
     status: "new",
+    district: "上海",
+    lastVerifiedAt: "2026-07-31",
+    responsibilities: `围绕${track}方向负责产品规划、需求分析、方案设计与跨团队落地。`,
+    requirements: `${experience}产品经验，${education}及以上学历。`,
   };
 });
 
 const defaultFilters: Filters = {
   search: "",
   cities: ["上海"],
-  salaryMin: 15,
-  experience: "不限",
-  education: "不限",
-  includeKeywords: "产品经理, AI, 数据, 增长",
-  excludeKeywords: "外包, 兼职",
   track: "全部方向",
-  workMode: "全部方式",
 };
 
-const DATA_VERSION = "product-manager-shanghai-2026-07-31-v5";
+const DATA_VERSION = "product-manager-shanghai-2026-07-31-v6";
 
 const cityOptions = ["上海"];
-const trackOptions = ["全部方向", "AI / 大模型", "数据产品", "增长 / 用户", "商业化 / B端", "企业服务 / SaaS"];
-const workModeOptions = ["全部方式", "线下", "远程"];
-
-const splitKeywords = (value: string) =>
-  value
-    .split(/[,，\s]+/)
-    .map((item) => item.trim().toLowerCase())
-    .filter(Boolean);
+const trackOptions = [
+  "全部方向",
+  "AI / 大模型",
+  "数据产品",
+  "增长 / 用户",
+  "商业化 / B端",
+  "企业服务 / SaaS",
+  "通用产品",
+];
 
 function getScore(job: Job, filters: Filters) {
-  const haystack = `${job.title} ${job.description} ${job.tags.join(" ")}`.toLowerCase();
-  const include = splitKeywords(filters.includeKeywords);
-  const matched = include.filter((keyword) => haystack.includes(keyword));
-  let score = 42;
-  if (filters.cities.includes(job.city)) score += 14;
-  if (job.salaryMin >= filters.salaryMin) score += 18;
-  if (filters.track === "全部方向" || job.track === filters.track) score += 12;
-  if (filters.workMode === "全部方式" || job.workMode === filters.workMode) score += 6;
-  score += Math.min(24, matched.length * 12);
-  if (job.title.toLowerCase().includes(filters.search.trim().toLowerCase())) score += 6;
+  const search = filters.search.trim().toLowerCase();
+  const matched = search && job.title.toLowerCase().includes(search) ? [search] : [];
+  let score = 72;
+  if (filters.track !== "全部方向" && job.track === filters.track) score += 18;
+  if (matched.length) score += 10;
 
   return {
     score: Math.min(98, score),
@@ -530,10 +522,12 @@ export default function Home() {
   const [sortBy, setSortBy] = useState<"score" | "salary">("score");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [importText, setImportText] = useState("");
   const [notice, setNotice] = useState("");
   const [hydrated, setHydrated] = useState(false);
 
+  /* eslint-disable react-hooks/set-state-in-effect -- hydrate the local-only snapshot once on mount. */
   useEffect(() => {
     try {
       const savedVersion = window.localStorage.getItem("job-lens-data-version");
@@ -552,6 +546,7 @@ export default function Home() {
     }
     setHydrated(true);
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     if (!hydrated) return;
@@ -565,10 +560,8 @@ export default function Home() {
 
     return jobs
       .map((job) => {
-        const haystack =
-          `${job.title} ${job.company} ${job.description} ${job.tags.join(" ")}`.toLowerCase();
         const { score, matched } = getScore(job, filters);
-        return { ...job, score, matched, haystack };
+        return { ...job, score, matched };
       })
       .filter((job) => {
         const titleMatches = !search || job.title.toLowerCase().includes(search);
@@ -584,19 +577,11 @@ export default function Home() {
   const matchingCount = evaluatedJobs.length;
   const viewedCount = jobs.filter((job) => job.status === "ignored").length;
 
-  const toggleViewed = (id: number) => {
-    setJobs((current) => current.map((job) =>
-      job.id === id ? { ...job, status: job.status === "ignored" ? "new" : "ignored" } : job,
+  const openJob = (job: Job) => {
+    setJobs((current) => current.map((item) =>
+      item.id === job.id ? { ...item, status: "ignored" } : item,
     ));
-  };
-
-  const toggleCity = (city: string) => {
-    setFilters((current) => ({
-      ...current,
-      cities: current.cities.includes(city)
-        ? current.cities.filter((item) => item !== city)
-        : [...current.cities, city],
-    }));
+    setSelectedJob({ ...job, status: "ignored" });
   };
 
   const handleImport = (event: FormEvent<HTMLFormElement>) => {
@@ -659,7 +644,7 @@ export default function Home() {
           </div>
 
           <label className="field">
-            <span>搜索职位或公司</span>
+            <span>岗位名称关键词</span>
             <span className="search-input">
               <span aria-hidden="true">⌕</span>
               <input
@@ -667,25 +652,14 @@ export default function Home() {
                 onChange={(event) =>
                   setFilters((current) => ({ ...current, search: event.target.value }))
                 }
-                placeholder="例如 Python、AI 应用"
+                placeholder="例如 AI、策略、增长"
               />
             </span>
           </label>
 
           <fieldset className="field">
             <legend>目标城市</legend>
-            <div className="choice-grid">
-              {cityOptions.map((city) => (
-                <label className="check-choice" key={city}>
-                  <input
-                    type="checkbox"
-                    checked={filters.cities.includes(city)}
-                    onChange={() => toggleCity(city)}
-                  />
-                  <span>{city}</span>
-                </label>
-              ))}
-            </div>
+            <div className="fixed-city"><span>⌖</span> 上海 <small>固定</small></div>
           </fieldset>
 
           <label className="field">
@@ -701,9 +675,9 @@ export default function Home() {
           </label>
 
           <div className="panel-foot">
-            <p>修改后自动应用筛选</p>
+            <p>岗位名称只做精确标题匹配</p>
             <button className="text-button" onClick={resetDemo}>
-              恢复抓取样本
+              重置已查看
             </button>
           </div>
         </aside>
@@ -762,7 +736,17 @@ export default function Home() {
             {evaluatedJobs.map((job) => {
               const isViewed = job.status === "ignored";
               return (
-                <article className={`job-card ${isViewed ? "is-rejected" : ""}`} key={job.id}>
+                <article
+                  className={`job-card ${isViewed ? "is-rejected" : ""}`}
+                  key={job.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openJob(job)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") openJob(job);
+                  }}
+                  aria-label={`查看${job.title}详情`}
+                >
                   <div className="job-main">
                     <div className="job-title-row">
                       <div>
@@ -799,7 +783,7 @@ export default function Home() {
                         <span key={tag}>{tag}</span>
                       ))}
                     </div>
-                    <p className="source-line">来源：{job.source}</p>
+                    <p className="source-line">来源：{job.source} · 最近验证 {job.lastVerifiedAt ?? "待验证"}</p>
                   </div>
 
                   <div className="score-panel">
@@ -811,32 +795,28 @@ export default function Home() {
                       {isViewed ? (
                         <p>
                           <span className="reason-dot reason-muted" />
-                          已标记，点击可恢复
+                          已查看，点击打开详情
                         </p>
                       ) : (
                         <>
                           <p>
                             <span className="reason-dot" />
-                            城市和薪资符合
+                            上海岗位 · 详情链接可追溯
                           </p>
                           <p>
                             <span className="reason-dot" />
-                            {job.track} · 命中 {job.matched.length || 0} 个关键词
+                            {job.track} · 岗位名称匹配
                           </p>
                         </>
                       )}
                     </div>
                     <div className="card-actions">
-                      <a className="button button-ghost" href={job.url} target="_blank" rel="noreferrer">
+                      <button className="button button-ghost" onClick={(event) => { event.stopPropagation(); openJob(job); }}>
+                        查看岗位详情
+                      </button>
+                      <a className="button button-secondary" href={job.url} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}>
                         打开 BOSS 详情 ↗
                       </a>
-                      <button
-                        className="button button-secondary"
-                        onClick={() => toggleViewed(job.id)}
-                        aria-label={`${isViewed ? "恢复" : "标记已看"} ${job.title}`}
-                      >
-                        {isViewed ? "恢复显示" : "标记已看"}
-                      </button>
                     </div>
                   </div>
                 </article>
@@ -905,6 +885,36 @@ export default function Home() {
               </div>
             </form>
           </section>
+        </div>
+      )}
+
+      {selectedJob && (
+        <div className="detail-wrap" role="presentation" onMouseDown={() => setSelectedJob(null)}>
+          <aside
+            className="detail-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="job-detail-title"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className="detail-head">
+              <div>
+                <p className="eyebrow">JOB DETAIL · 上海</p>
+                <h2 id="job-detail-title">{selectedJob.title}</h2>
+                <p>{selectedJob.company} · {selectedJob.track}</p>
+              </div>
+              <button className="icon-button" onClick={() => setSelectedJob(null)} aria-label="关闭岗位详情">×</button>
+            </div>
+            <div className="detail-salary">{selectedJob.salaryMax ? `${selectedJob.salaryMin}–${selectedJob.salaryMax}K` : "薪资待确认"}</div>
+            <div className="detail-meta">
+              <span>⌖ 上海</span><span>◷ {selectedJob.experience}</span><span>▱ {selectedJob.education}</span>
+            </div>
+            <div className="detail-section"><h3>岗位摘要</h3><p>{selectedJob.description}</p></div>
+            <div className="detail-section"><h3>主要职责</h3><p>{selectedJob.responsibilities ?? "以BOSS原岗位详情为准。"}</p></div>
+            <div className="detail-section"><h3>任职要求</h3><p>{selectedJob.requirements ?? "以BOSS原岗位详情为准。"}</p></div>
+            <div className="detail-source">来源：{selectedJob.source}<br />最近验证：{selectedJob.lastVerifiedAt ?? "待验证"}</div>
+            <a className="button button-primary detail-link" href={selectedJob.url} target="_blank" rel="noreferrer">前往BOSS查看原岗位 ↗</a>
+          </aside>
         </div>
       )}
 

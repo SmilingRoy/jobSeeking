@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "职位雷达｜个人求职整理工具",
-  description: "导入职位、设置筛选条件，快速找到更值得投递的机会。",
+  title: "职位雷达｜上海产品经理岗位",
+  description: "只看上海产品经理岗位，按产品方向和岗位名称快速筛选。",
 };
 
 export default function RootLayout({
