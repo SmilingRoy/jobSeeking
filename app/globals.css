@@ -689,6 +689,35 @@ p {
   padding: 22px 18px;
 }
 
+.review-status {
+  align-items: center;
+  background: var(--green-pale);
+  border: 1px solid #b9e2c8;
+  border-radius: 50%;
+  color: var(--green-dark);
+  display: flex;
+  flex-direction: column;
+  height: 76px;
+  justify-content: center;
+  width: 76px;
+}
+
+.review-status strong {
+  font-size: 21px;
+  line-height: 1;
+}
+
+.review-status span {
+  font-size: 9px;
+  margin-top: 4px;
+}
+
+.review-status.is-viewed {
+  background: #edf0ee;
+  border-color: #d8dedb;
+  color: #7c8983;
+}
+
 .score-ring {
   align-items: center;
   background:
@@ -777,6 +806,24 @@ p {
   text-align: center;
 }
 
+.load-more {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  color: var(--green-dark);
+  display: block;
+  font-size: 12px;
+  font-weight: 750;
+  margin: 18px auto 0;
+  min-height: 42px;
+  padding: 0 22px;
+}
+
+.load-more:hover {
+  border-color: #a9c5b5;
+  box-shadow: 0 8px 22px rgba(23, 56, 43, 0.08);
+}
+
 .empty-state > span {
   color: var(--green);
   font-size: 34px;
@@ -849,6 +896,62 @@ p {
   font-size: 12px;
   line-height: 1.7;
   margin: 18px 0 20px;
+}
+
+.json-import-card {
+  align-items: center;
+  background: var(--green-pale);
+  border: 1px solid #b9e2c8;
+  border-radius: 12px;
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding: 15px;
+}
+
+.json-import-card > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.json-import-card strong {
+  font-size: 13px;
+}
+
+.json-import-card span {
+  color: #557565;
+  font-size: 10px;
+}
+
+.file-button {
+  flex-shrink: 0;
+}
+
+.file-button input {
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  position: absolute;
+  width: 1px;
+}
+
+.import-divider {
+  align-items: center;
+  color: #8a9691;
+  display: flex;
+  font-size: 10px;
+  gap: 12px;
+  margin: 0 0 18px;
+}
+
+.import-divider::before,
+.import-divider::after {
+  background: var(--line);
+  content: "";
+  flex: 1;
+  height: 1px;
 }
 
 .import-tip {
@@ -1055,6 +1158,15 @@ p {
   .button {
     padding-left: 12px;
     padding-right: 12px;
+  }
+
+  .json-import-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .json-import-card .file-button {
+    width: 100%;
   }
 
   .workspace {

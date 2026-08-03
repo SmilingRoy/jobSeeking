@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 
 type JobStatus = "new" | "ignored";
 
@@ -27,12 +27,43 @@ type Job = {
   lastVerifiedAt?: string;
   responsibilities?: string;
   requirements?: string;
+  externalId?: string;
+  verificationStatus?: "unverified_index_snapshot" | "verified";
 };
 
 type Filters = {
   search: string;
   cities: string[];
   track: string;
+};
+
+type IndexedJobRecord = {
+  job_id?: unknown;
+  job_url?: unknown;
+  collected_at?: unknown;
+  last_seen_at?: unknown;
+  job_status?: unknown;
+  job_title?: unknown;
+  company_name?: unknown;
+  city?: unknown;
+  district?: unknown;
+  salary_range?: unknown;
+  experience_requirement?: unknown;
+  education_requirement?: unknown;
+  company_size?: unknown;
+  industry?: unknown;
+  job_description_raw?: unknown;
+  responsibility_summary?: unknown;
+  qualification_summary?: unknown;
+  product_direction_tags?: unknown;
+  index_evidence?: {
+    result_description?: unknown;
+    verification_status?: unknown;
+  };
+};
+
+type IndexedPayload = {
+  jobs?: unknown;
 };
 
 const initialJobs: Job[] = [
@@ -421,16 +452,17 @@ const seededJobs: Job[] = shanghaiSeedRows.map((row, index) => {
     industry: track === "AI / 大模型" ? "人工智能" : track === "数据产品" ? "互联网 / 数据" : "互联网",
     track,
     workMode: "线下",
-    description: `来自 BOSS 公开上海职位摘要：${title}，围绕${track}方向负责产品规划、需求分析与落地。`,
-    tags: [track, "上海", "产品经理"],
-    postedAt: "公开页抓取",
-    source: "BOSS直聘上海公开职位详情",
+    description: `公开索引样本：${title}，产品方向暂归类为${track}；完整 JD 和岗位开放状态尚未验证。`,
+    tags: [track, "公开索引", "待验证"],
+    postedAt: "索引快照",
+    source: "BOSS直聘公开网页索引",
     url,
     status: "new",
-    district: "上海",
+    district: "待确认",
     lastVerifiedAt: "待验证",
-    responsibilities: `围绕${track}方向负责产品规划、需求分析、方案设计与跨团队落地。`,
-    requirements: `${experience}产品经验，${education}及以上学历。`,
+    responsibilities: "完整 JD 尚未验证，请以 BOSS 原岗位详情为准。",
+    requirements: `公开索引字段：${experience}，${education}。其他要求待验证。`,
+    verificationStatus: "unverified_index_snapshot",
   };
 });
 
@@ -440,31 +472,24 @@ const defaultFilters: Filters = {
   track: "全部方向",
 };
 
-const DATA_VERSION = "product-manager-shanghai-2026-07-31-v6";
+const DATA_VERSION = "product-manager-shanghai-2026-08-03-v7";
 
 const cityOptions = ["上海"];
 const trackOptions = [
   "全部方向",
+  "用户 / 增长",
+  "交易 / 履约",
+  "本地生活 / LBS / 出行",
   "AI / 大模型",
+  "电商",
+  "策略平台",
   "数据产品",
   "增长 / 用户",
   "商业化 / B端",
   "企业服务 / SaaS",
   "通用产品",
+  "待确认",
 ];
-
-function getScore(job: Job, filters: Filters) {
-  const search = filters.search.trim().toLowerCase();
-  const matched = search && job.title.toLowerCase().includes(search) ? [search] : [];
-  let score = 72;
-  if (filters.track !== "全部方向" && job.track === filters.track) score += 18;
-  if (matched.length) score += 10;
-
-  return {
-    score: Math.min(98, score),
-    matched,
-  };
-}
 
 function parseJobText(text: string, nextId: number): Job {
   const lines = text
@@ -479,20 +504,9 @@ function parseJobText(text: string, nextId: number): Job {
     ) || "不限";
   const education =
     ["博士", "硕士", "本科", "大专"].find((item) => text.includes(item)) || "不限";
-  const commonTags = [
-    "Python",
-    "Java",
-    "React",
-    "Node.js",
-    "AI",
-    "RAG",
-    "FastAPI",
-    "Django",
-    "SQL",
-    "双休",
-    "外包",
-    "出差",
-  ].filter((tag) => text.toLowerCase().includes(tag.toLowerCase()));
+  const commonTags = ["用户增长", "交易", "履约", "本地生活", "LBS", "出行", "AI", "电商", "策略"]
+    .filter((tag) => text.toLowerCase().includes(tag.toLowerCase()));
+  const bossUrl = text.match(/https:\/\/www\.zhipin\.com\/job_detail\/[^\s?#]+\.html/i)?.[0];
 
   return {
     id: nextId,
@@ -505,42 +519,204 @@ function parseJobText(text: string, nextId: number): Job {
     education,
     companySize: "待确认",
     industry: "待确认",
-    track: "待确认",
+    track: inferTrack(commonTags, lines[0] || "", text),
     workMode: "待确认",
-    source: "用户导入",
-    description: lines.slice(2).join(" ") || "暂无职位描述",
-    tags: commonTags.length ? commonTags : ["待整理"],
+    source: "用户手动导入",
+    description: lines.slice(2).join(" ") || "职位描述待确认",
+    tags: commonTags.length ? [...commonTags, "待验证"] : ["待验证"],
     postedAt: "刚刚导入",
-    url: "https://www.zhipin.com/",
+    url: bossUrl || "",
     status: "new",
+    lastVerifiedAt: "待验证",
+    verificationStatus: "unverified_index_snapshot",
   };
+}
+
+function cleanIndexedField(value: unknown, fallback = "待确认") {
+  if (typeof value !== "string") return fallback;
+  const cleaned = value.trim();
+  return !cleaned || cleaned.toLowerCase() === "unknown" ? fallback : cleaned;
+}
+
+function normalizeBossJobUrl(value: unknown) {
+  if (typeof value !== "string") return null;
+  try {
+    const url = new URL(value);
+    if (url.hostname !== "zhipin.com" && !url.hostname.endsWith(".zhipin.com")) return null;
+    if (!/^\/job_detail\/[^/]+\.html\/?$/i.test(url.pathname)) return null;
+    return `https://www.zhipin.com${url.pathname.replace(/\/$/, "")}`;
+  } catch {
+    return null;
+  }
+}
+
+function parseSalaryRange(value: unknown) {
+  if (typeof value !== "string") return { min: 0, max: 0 };
+  const matched = value.match(/(\d{1,3}(?:\.\d+)?)\s*[-–—]\s*(\d{1,3}(?:\.\d+)?)\s*K/i);
+  return matched
+    ? { min: Number(matched[1]), max: Number(matched[2]) }
+    : { min: 0, max: 0 };
+}
+
+function inferTrack(tags: string[], title: string, description: string) {
+  const evidence = `${tags.join(" ")} ${title} ${description}`.toLowerCase();
+  if (/本地生活|lbs|地图|出行/.test(evidence)) return "本地生活 / LBS / 出行";
+  if (/交易|订单|履约|售后/.test(evidence)) return "交易 / 履约";
+  if (/用户|增长|转化|留存/.test(evidence)) return "用户 / 增长";
+  if (/ai|大模型|agent|智能体/.test(evidence)) return "AI / 大模型";
+  if (/电商/.test(evidence)) return "电商";
+  if (/策略|流量分发/.test(evidence)) return "策略平台";
+  if (/数据/.test(evidence)) return "数据产品";
+  return title.includes("产品经理") ? "通用产品" : "待确认";
+}
+
+function indexedJobToJob(record: IndexedJobRecord, id: number): Job | null {
+  const url = normalizeBossJobUrl(record.job_url);
+  const title = cleanIndexedField(record.job_title, "");
+  if (!url || record.city !== "上海" || !title.includes("产品经理") || record.job_status === "closed") {
+    return null;
+  }
+  const directionTags = Array.isArray(record.product_direction_tags)
+    ? record.product_direction_tags.filter((tag): tag is string => typeof tag === "string" && Boolean(tag.trim()))
+    : [];
+  const indexDescription = cleanIndexedField(record.index_evidence?.result_description, "");
+  const rawDescription = cleanIndexedField(record.job_description_raw, "");
+  const descriptionEvidence = rawDescription || indexDescription;
+  const salary = parseSalaryRange(record.salary_range);
+  const collectedAt = cleanIndexedField(record.last_seen_at ?? record.collected_at, "");
+  const responsibility = cleanIndexedField(record.responsibility_summary, "");
+  const qualification = cleanIndexedField(record.qualification_summary, "");
+
+  return {
+    id,
+    title,
+    company: cleanIndexedField(record.company_name, "公司待确认"),
+    city: "上海",
+    salaryMin: salary.min,
+    salaryMax: salary.max,
+    experience: cleanIndexedField(record.experience_requirement),
+    education: cleanIndexedField(record.education_requirement),
+    companySize: cleanIndexedField(record.company_size),
+    industry: cleanIndexedField(record.industry),
+    track: inferTrack(directionTags, title, descriptionEvidence),
+    workMode: "待确认",
+    source: "BOSS直聘公开网页索引",
+    description: descriptionEvidence
+      ? `公开索引摘要（未验证）：${descriptionEvidence}`
+      : "公开索引只确认了岗位链接、上海和产品经理标题；完整 JD 待验证。",
+    tags: [...new Set([...directionTags, "公开索引", "待验证"])],
+    postedAt: collectedAt ? `索引 ${collectedAt.slice(0, 10)}` : "索引快照",
+    url,
+    status: "new",
+    district: cleanIndexedField(record.district),
+    lastVerifiedAt: "待验证",
+    responsibilities: responsibility || "完整 JD 尚未验证，请以 BOSS 原岗位详情为准。",
+    requirements: qualification || [
+      cleanIndexedField(record.experience_requirement, ""),
+      cleanIndexedField(record.education_requirement, ""),
+    ].filter(Boolean).join(" · ") || "任职要求待验证。",
+    externalId: cleanIndexedField(record.job_id, ""),
+    verificationStatus: "unverified_index_snapshot",
+  };
+}
+
+function mergeIndexedPayload(payload: IndexedPayload | IndexedJobRecord[], currentJobs: Job[]) {
+  const records = Array.isArray(payload) ? payload : Array.isArray(payload.jobs) ? payload.jobs : [];
+  let nextId = Math.max(0, ...currentJobs.map((job) => job.id)) + 1;
+  let added = 0;
+  let updated = 0;
+  let rejected = 0;
+  const merged = [...currentJobs];
+  const byUrl = new Map(merged.map((job, index) => [normalizeBossJobUrl(job.url), index]));
+
+  for (const rawRecord of records) {
+    if (!rawRecord || typeof rawRecord !== "object") {
+      rejected += 1;
+      continue;
+    }
+    const incoming = indexedJobToJob(rawRecord as IndexedJobRecord, nextId);
+    if (!incoming) {
+      rejected += 1;
+      continue;
+    }
+    const existingIndex = byUrl.get(incoming.url);
+    if (existingIndex !== undefined) {
+      const existing = merged[existingIndex];
+      merged[existingIndex] = {
+        ...incoming,
+        id: existing.id,
+        status: existing.status,
+        company: existing.company === "公司待确认" ? incoming.company : existing.company,
+        tags: [...new Set([...existing.tags, ...incoming.tags])],
+      };
+      updated += 1;
+      continue;
+    }
+    merged.push(incoming);
+    byUrl.set(incoming.url, merged.length - 1);
+    nextId += 1;
+    added += 1;
+  }
+
+  return { jobs: merged, added, updated, rejected, received: records.length };
+}
+
+function migrateStoredJobs(value: unknown): Job[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((job): job is Job => Boolean(
+      job
+      && typeof job === "object"
+      && (job as Job).city === "上海"
+      && typeof (job as Job).title === "string"
+      && (job as Job).title.includes("产品经理")
+      && normalizeBossJobUrl((job as Job).url),
+    ))
+    .map((job) => {
+      const legacyIndexRecord = job.source?.includes("BOSS直聘") && job.verificationStatus !== "verified";
+      return {
+        ...job,
+        url: normalizeBossJobUrl(job.url) || job.url,
+        source: legacyIndexRecord ? "BOSS直聘公开网页索引" : job.source,
+        description: legacyIndexRecord
+          ? `公开索引样本：${job.title}，产品方向暂归类为${job.track}；完整 JD 和岗位开放状态尚未验证。`
+          : job.description,
+        tags: legacyIndexRecord
+          ? [...new Set([job.track, "公开索引", "待验证"])]
+          : job.tags,
+        lastVerifiedAt: job.lastVerifiedAt || "待验证",
+        responsibilities: legacyIndexRecord
+          ? "完整 JD 尚未验证，请以 BOSS 原岗位详情为准。"
+          : job.responsibilities,
+        requirements: legacyIndexRecord
+          ? `公开索引字段：${job.experience}，${job.education}。其他要求待验证。`
+          : job.requirements,
+        verificationStatus: job.verificationStatus || "unverified_index_snapshot",
+      };
+    });
 }
 
 export default function Home() {
   const [jobs, setJobs] = useState<Job[]>(seededJobs);
   const [filters, setFilters] = useState<Filters>(defaultFilters);
-  const [sortBy, setSortBy] = useState<"score" | "salary">("score");
+  const [sortBy, setSortBy] = useState<"recent" | "salary">("recent");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [importText, setImportText] = useState("");
   const [notice, setNotice] = useState("");
   const [hydrated, setHydrated] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(80);
 
   /* eslint-disable react-hooks/set-state-in-effect -- hydrate the local-only snapshot once on mount. */
   useEffect(() => {
     try {
-      const savedVersion = window.localStorage.getItem("job-lens-data-version");
       const savedJobs = window.localStorage.getItem("job-lens-jobs");
       const savedFilters = window.localStorage.getItem("job-lens-filters");
-      if (savedVersion === DATA_VERSION) {
-        if (savedJobs) setJobs(JSON.parse(savedJobs));
-        if (savedFilters) setFilters({ ...defaultFilters, ...JSON.parse(savedFilters) });
-      } else {
-        setJobs(seededJobs);
-        setFilters(defaultFilters);
-        window.localStorage.setItem("job-lens-data-version", DATA_VERSION);
-      }
+      const migratedJobs = savedJobs ? migrateStoredJobs(JSON.parse(savedJobs)) : [];
+      setJobs(migratedJobs.length ? migratedJobs : seededJobs);
+      if (savedFilters) setFilters({ ...defaultFilters, ...JSON.parse(savedFilters) });
+      window.localStorage.setItem("job-lens-data-version", DATA_VERSION);
     } catch {
       // Keep the demo state when stored data is unavailable.
     }
@@ -559,10 +735,6 @@ export default function Home() {
     const search = filters.search.trim().toLowerCase();
 
     return jobs
-      .map((job) => {
-        const { score, matched } = getScore(job, filters);
-        return { ...job, score, matched };
-      })
       .filter((job) => {
         const titleMatches = !search || job.title.toLowerCase().includes(search);
         const cityMatches = filters.cities.includes(job.city);
@@ -570,12 +742,14 @@ export default function Home() {
         return titleMatches && cityMatches && trackMatches;
       })
       .sort((a, b) =>
-        sortBy === "score" ? b.score - a.score : b.salaryMax - a.salaryMax,
+        sortBy === "recent" ? b.id - a.id : b.salaryMax - a.salaryMax,
       );
   }, [jobs, filters, sortBy]);
 
   const matchingCount = evaluatedJobs.length;
   const viewedCount = jobs.filter((job) => job.status === "ignored").length;
+  const pendingVerificationCount = jobs.filter((job) => job.verificationStatus !== "verified").length;
+  const visibleJobs = evaluatedJobs.slice(0, visibleCount);
 
   const openJob = (job: Job) => {
     setJobs((current) => current.map((item) =>
@@ -589,6 +763,16 @@ export default function Home() {
     if (!importText.trim()) return;
     const nextId = Math.max(0, ...jobs.map((job) => job.id)) + 1;
     const nextJob = parseJobText(importText, nextId);
+    if (nextJob.city !== "上海" || !nextJob.title.includes("产品经理") || !nextJob.url) {
+      setNotice("未导入：需要上海、产品经理标题和具体 BOSS 岗位链接");
+      window.setTimeout(() => setNotice(""), 3200);
+      return;
+    }
+    if (jobs.some((job) => normalizeBossJobUrl(job.url) === nextJob.url)) {
+      setNotice("未导入：这个岗位链接已经存在");
+      window.setTimeout(() => setNotice(""), 2600);
+      return;
+    }
     setJobs((current) => [nextJob, ...current]);
     setImportText("");
     setImportOpen(false);
@@ -596,10 +780,32 @@ export default function Home() {
     window.setTimeout(() => setNotice(""), 2600);
   };
 
-  const resetDemo = () => {
-    setJobs(seededJobs);
-    setFilters(defaultFilters);
-    setNotice("最新岗位样本已恢复");
+  const handleJsonImport = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setNotice("文件超过 5MB，请先分批导入");
+      window.setTimeout(() => setNotice(""), 3200);
+      return;
+    }
+    try {
+      const payload = JSON.parse(await file.text()) as IndexedPayload | IndexedJobRecord[];
+      const result = mergeIndexedPayload(payload, jobs);
+      if (!result.received) throw new Error("JSON 中没有 jobs 数组");
+      setJobs(result.jobs);
+      setVisibleCount(Math.max(80, result.added + result.updated));
+      setImportOpen(false);
+      setNotice(`导入完成：新增 ${result.added}，更新 ${result.updated}，跳过 ${result.rejected}`);
+    } catch {
+      setNotice("无法导入：请选择采集器生成的 JSON 文件");
+    }
+    window.setTimeout(() => setNotice(""), 3600);
+  };
+
+  const resetViewed = () => {
+    setJobs((current) => current.map((job) => ({ ...job, status: "new" })));
+    setNotice("已清除全部已查看状态");
     window.setTimeout(() => setNotice(""), 2600);
   };
 
@@ -622,7 +828,7 @@ export default function Home() {
           </button>
           <button className="button button-primary" onClick={() => setImportOpen(true)}>
             <span aria-hidden="true">＋</span>
-            导入职位
+            导入采集结果
           </button>
         </div>
       </header>
@@ -676,7 +882,7 @@ export default function Home() {
 
           <div className="panel-foot">
             <p>岗位名称只做精确标题匹配</p>
-            <button className="text-button" onClick={resetDemo}>
+            <button className="text-button" onClick={resetViewed}>
               重置已查看
             </button>
           </div>
@@ -713,27 +919,27 @@ export default function Home() {
                 <span>已看（灰显）</span>
               </div>
               <div className="metric">
-                <strong>上海</strong>
-                <span>当前城市</span>
+                <strong>{pendingVerificationCount}</strong>
+                <span>待验证</span>
               </div>
             </div>
           </div>
 
           <div className="list-toolbar">
             <p>
-              显示 <strong>{evaluatedJobs.length}</strong> 个结果 · 上海样本快照 · 链接以BOSS原页为准
+              显示 <strong>{Math.min(visibleCount, evaluatedJobs.length)}</strong> / {evaluatedJobs.length} 个结果 · 上海索引候选 · 链接以BOSS原页为准
             </p>
             <label>
               排序
-              <select value={sortBy} onChange={(event) => setSortBy(event.target.value as "score" | "salary")}>
-                <option value="score">匹配度优先</option>
+              <select value={sortBy} onChange={(event) => setSortBy(event.target.value as "recent" | "salary")}>
+                <option value="recent">最近导入优先</option>
                 <option value="salary">最高薪资优先</option>
               </select>
             </label>
           </div>
 
           <div className="job-list">
-            {evaluatedJobs.map((job) => {
+            {visibleJobs.map((job) => {
               const isViewed = job.status === "ignored";
               return (
                 <article
@@ -765,7 +971,6 @@ export default function Home() {
                       </div>
                       <div className="salary">
                         {job.salaryMax ? `${job.salaryMin}–${job.salaryMax}K` : "薪资待确认"}
-                        <small>· 14薪</small>
                       </div>
                     </div>
 
@@ -787,9 +992,9 @@ export default function Home() {
                   </div>
 
                   <div className="score-panel">
-                    <div className={`score-ring ${isViewed ? "score-muted" : ""}`}>
-                      <strong>{isViewed ? "✓" : job.score}</strong>
-                      <span>{isViewed ? "已看" : "匹配度"}</span>
+                    <div className={`review-status ${isViewed ? "is-viewed" : ""}`}>
+                      <strong>{isViewed ? "✓" : "待"}</strong>
+                      <span>{isViewed ? "已看" : "验证"}</span>
                     </div>
                     <div className="match-reason">
                       {isViewed ? (
@@ -801,11 +1006,11 @@ export default function Home() {
                         <>
                           <p>
                             <span className="reason-dot" />
-                            上海岗位 · 详情链接可追溯
+                            索引明确为上海
                           </p>
                           <p>
                             <span className="reason-dot" />
-                            {job.track} · 岗位名称匹配
+                            具体岗位链接可追溯
                           </p>
                         </>
                       )}
@@ -823,6 +1028,12 @@ export default function Home() {
               );
             })}
           </div>
+
+          {visibleJobs.length < evaluatedJobs.length && (
+            <button className="load-more" onClick={() => setVisibleCount((count) => count + 80)}>
+              再显示 {Math.min(80, evaluatedJobs.length - visibleJobs.length)} 个岗位
+            </button>
+          )}
 
           {!evaluatedJobs.length && (
             <div className="empty-state">
@@ -850,16 +1061,27 @@ export default function Home() {
           >
             <div className="modal-head">
               <div>
-                <p className="eyebrow">IMPORT A JOB</p>
-                <h2 id="import-title">导入职位信息</h2>
+                <p className="eyebrow">IMPORT JOBS</p>
+                <h2 id="import-title">导入岗位数据</h2>
               </div>
               <button className="icon-button" onClick={() => setImportOpen(false)} aria-label="关闭">
                 ×
               </button>
             </div>
             <p className="modal-help">
-              从你有权访问的页面复制职位名称、公司和描述。系统会识别城市、薪资、经验和关键词。
+              推荐选择采集器生成的 JSON。系统只接收上海、产品经理标题和具体 BOSS 岗位链接，并按链接自动去重。
             </p>
+            <div className="json-import-card">
+              <div>
+                <strong>批量导入采集结果</strong>
+                <span>支持本轮结果或历史合并 JSON，最大 5MB</span>
+              </div>
+              <label className="button button-primary file-button">
+                选择 JSON
+                <input type="file" accept=".json,application/json" onChange={handleJsonImport} />
+              </label>
+            </div>
+            <div className="import-divider"><span>或手动导入一条</span></div>
             <form onSubmit={handleImport}>
               <label className="field">
                 <span>职位文本</span>
@@ -867,13 +1089,13 @@ export default function Home() {
                   autoFocus
                   value={importText}
                   onChange={(event) => setImportText(event.target.value)}
-                  placeholder={"AI 产品工程师\n某某科技\n上海 · 25-35K · 3-5年 · 本科\n负责 Python、FastAPI 和 RAG 应用开发"}
+                  placeholder={"增长产品经理\n某某科技\n上海 · 25-35K · 3-5年 · 本科\nhttps://www.zhipin.com/job_detail/xxx.html\n公开索引摘要或你有权使用的职位信息"}
                   rows={8}
                 />
               </label>
               <div className="import-tip">
                 <strong>格式提示</strong>
-                <span>第一行职位名，第二行公司，其余内容作为职位描述。</span>
+                <span>第一行职位名，第二行公司，正文中必须含上海和具体 BOSS 岗位链接。</span>
               </div>
               <div className="modal-actions">
                 <button type="button" className="button button-secondary" onClick={() => setImportOpen(false)}>
