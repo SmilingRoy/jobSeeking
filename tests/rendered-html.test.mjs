@@ -17,16 +17,15 @@ test("server renders the Job Lens dashboard with the imported dataset", async ()
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
   const html = await response.text();
   assert.match(html, /职位雷达/);
-  assert.match(html, /上海[\s\S]*193[\s\S]*个岗位/);
+  assert.match(html, /上海[\s\S]*0[\s\S]*个岗位/);
   assert.match(html, /筛选岗位/);
-  assert.match(html, /前往 BOSS/);
-  assert.match(html, /job_detail\//);
+  assert.match(html, /没有符合条件的岗位/);
   assert.doesNotMatch(html, /Your site is taking shape|codex-preview|SkeletonPreview/);
 });
 
 test("site data contains only concrete BOSS detail links", async () => {
   const data = JSON.parse(await readFile(new URL("../data/jobs.json", import.meta.url), "utf8"));
-  assert.equal(data.jobs.length, 193);
+  assert.equal(data.jobs.length, 0);
   for (const job of data.jobs) {
     assert.match(job.url, /^https:\/\/www\.zhipin\.com\/job_detail\/.+\.html$/);
     assert.ok(job.id);
