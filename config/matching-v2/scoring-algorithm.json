@@ -1,0 +1,40 @@
+{
+  "version": "matching-v2.0.0",
+  "confidence_floor_for_recommendation": 0.7,
+  "thresholds": {
+    "preferred": 85,
+    "consider": 70,
+    "review": 55
+  },
+  "dimensions": {
+    "title_fit": {"preferred": 1, "conditional": 0.65, "excluded": 0, "unknown": null},
+    "city_fit": {"match": 1, "conditional": 0.6, "mismatch": 0, "unknown": null},
+    "direction_fit": {"priority": 1, "adjacent": 0.72, "excluded": 0, "unknown": null},
+    "product_form_fit": {"priority": 1, "conditional": 0.65, "excluded": 0, "unknown": null},
+    "product_layer_fit": {"priority": 1, "conditional": 0.65, "excluded": 0, "unknown": null},
+    "financing_fit": {"preferred": 1, "normal": 0.8, "conditional": 0.6, "review": 0.45, "unknown": null},
+    "responsibility_fit": {"high": 1, "medium": 0.68, "low": 0.3, "excluded": 0, "unknown": null},
+    "role_fit": {"preferred": 1, "conditional": 0.65, "excluded": 0, "unknown": null},
+    "experience_fit": {"high": 1, "medium": 0.72, "low": 0.35, "unknown": null},
+    "company_quality": {"high": 1, "medium": 0.7, "low": 0.3, "unknown": null},
+    "freshness_fit": {"high": 1, "medium": 0.7, "low": 0.3, "unknown": null},
+    "mandatory_requirement_fit": {"match": 1, "conditional": 0.6, "unmet": 0, "unknown": null},
+    "team_quality": {"high": 1, "medium": 0.7, "low": 0.3, "unknown": null},
+    "work_mode_fit": {"match": 1, "conditional": 0.6, "mismatch": 0, "unknown": null},
+    "growth_value": {"high": 1, "medium": 0.68, "low": 0.3, "unknown": null},
+    "risk_fit": {"clear": 1, "light": 0.8, "medium": 0.5, "severe": 0, "unknown": null}
+  },
+  "hard_filter_values": {
+    "job_status": ["closed"],
+    "title_fit": ["excluded"],
+    "city_fit": ["mismatch"],
+    "direction_fit": ["excluded"],
+    "product_form_fit": ["excluded"],
+    "product_layer_fit": ["excluded"],
+    "responsibility_fit": ["excluded"],
+    "role_fit": ["excluded"],
+    "mandatory_requirement_fit": ["unmet"],
+    "work_mode_fit": ["mismatch"],
+    "risk_fit": ["severe"]
+  }
+}
