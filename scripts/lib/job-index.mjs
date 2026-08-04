@@ -127,6 +127,11 @@ function unknownJobFields() {
   };
 }
 
+function optionalField(value) {
+  const normalized = normalizeText(value);
+  return normalized || UNKNOWN;
+}
+
 export function normalizeIndexedResult(result, context) {
   const rawTitle = normalizeText(result.title);
   const title = normalizeJobTitle(rawTitle);
@@ -155,6 +160,14 @@ export function normalizeIndexedResult(result, context) {
     result_title: rawTitle,
     result_description: description,
     verification_status: "unverified_index_snapshot"
+  };
+
+  const sourceFields = {
+    company_name: optionalField(result.company_name ?? result.company),
+    industry: optionalField(result.industry),
+    financing_stage: optionalField(result.financing_stage),
+    company_size: optionalField(result.company_size),
+    office_location: optionalField(result.office_location),
   };
 
   if (urlInfo.type === "listing") {
@@ -187,11 +200,12 @@ export function normalizeIndexedResult(result, context) {
       job_status: UNKNOWN,
       job_title: title || UNKNOWN,
       ...unknownJobFields(),
+      ...sourceFields,
       city: "上海",
       district: facts.district,
-      salary_range: facts.salary,
-      experience_requirement: facts.experience,
-      education_requirement: facts.education,
+      salary_range: optionalField(result.salary_range) !== UNKNOWN ? optionalField(result.salary_range) : facts.salary,
+      experience_requirement: optionalField(result.experience_requirement) !== UNKNOWN ? optionalField(result.experience_requirement) : facts.experience,
+      education_requirement: optionalField(result.education_requirement) !== UNKNOWN ? optionalField(result.education_requirement) : facts.education,
       product_direction_tags: facts.tags,
       missing_information: missingInformation,
       evaluation: {

@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { braveSearch, collectCodex, parseArgs } from "../scripts/collect-public-index.mjs";
-import { normalizeJobTitle } from "../scripts/lib/job-index.mjs";
+import { normalizeJobTitle, processSearchBatches } from "../scripts/lib/job-index.mjs";
 import { buildSitePayload } from "../scripts/index-to-site-jobs.mjs";
 import { collectPlan } from "../scripts/lib/resumable-collector.mjs";
 
@@ -161,4 +161,24 @@ test("extracts compensation from the raw card title", () => {
   });
   assert.equal(payload.jobs[0].title, "产品经理");
   assert.equal(payload.jobs[0].salary, "15-18K·15薪");
+});
+
+test("preserves explicit company metadata from an index result", () => {
+  const result = processSearchBatches([{
+    query: "上海交易产品经理",
+    mode: "exact",
+    results: [{
+      title: "交易产品经理 25-45K·15薪",
+      url: "https://www.zhipin.com/job_detail/source-fields.html",
+      description: "上海黄浦区 3-5年 本科；负责交易体验。",
+      company: "示例公司",
+      industry: "互联网",
+      financing_stage: "B轮",
+      company_size: "500-999人",
+    }],
+  }], { provider: "codex", collectedAt: "2026-08-04T00:00:00Z" });
+  assert.equal(result.jobs[0].company_name, "示例公司");
+  assert.equal(result.jobs[0].industry, "互联网");
+  assert.equal(result.jobs[0].financing_stage, "B轮");
+  assert.equal(result.jobs[0].company_size, "500-999人");
 });
