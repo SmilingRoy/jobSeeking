@@ -53,6 +53,22 @@ pnpm run collect:index -- --provider brave --pages 3 --modes exact --district-sh
 
 ## 网站开发
 
+### 截图 OCR 与岗位评估
+
+原位采集器保存岗位卡片和右侧详情截图后，先在 macOS 原生环境运行 Vision OCR，
+再把 OCR 文本归一化为岗位 schema，最后调用既定评分配置生成推荐结论：
+
+```bash
+python3 scripts/ocr-and-score.py \\
+  --manifest /path/to/manifest.json \\
+  --ocr-dir /path/to/card-ocr \\
+  --detail-ocr-dir /path/to/detail-ocr
+```
+
+输出 `data/jobs-structured.json`（schema 原始层）、`data/jobs-scored.json`（评分层）
+和网站使用的 `data/jobs.json`。只有完整 JD 和职责字段满足质量门槛的岗位，才会进入
+“推荐投递/可以考虑”；其余统一保留为“信息不足”，不根据缺失内容猜测。
+
 A clean full-stack starter running on
 [vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
 Drizzle support.
