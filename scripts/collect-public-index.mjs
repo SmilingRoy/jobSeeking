@@ -13,9 +13,9 @@ import { collectPlan } from "./lib/resumable-collector.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
-function parseArgs(argv) {
+export function parseArgs(argv) {
   const options = {
-    provider: process.env.BRAVE_SEARCH_API_KEY ? "brave" : "fixture",
+    provider: "brave",
     pages: 3,
     count: 20,
     delayMs: 1100,
@@ -90,8 +90,10 @@ async function readJson(path) {
   return JSON.parse(await readFile(path, "utf8"));
 }
 
-async function braveSearch(query, page, options) {
-  const key = process.env.BRAVE_SEARCH_API_KEY;
+export async function braveSearch(query, page, options, dependencies = {}) {
+  const key = dependencies.apiKey ?? process.env.BRAVE_SEARCH_API_KEY;
+  const fetchPage = dependencies.fetch ?? fetch;
+  const wait = dependencies.sleep ?? sleep;
   if (!key) throw new Error("缺少 BRAVE_SEARCH_API_KEY；可先用 --provider fixture 验证流程");
   const url = new URL("https://api.search.brave.com/res/v1/web/search");
   url.searchParams.set("q", query);
@@ -103,13 +105,22 @@ async function braveSearch(query, page, options) {
   url.searchParams.set("result_filter", "web");
 
   for (let attempt = 0; attempt < options.maxAttempts; attempt += 1) {
-    const response = await fetch(url, {
-      headers: {
-        Accept: "application/json",
-        "Accept-Encoding": "gzip",
-        "X-Subscription-Token": key
+    let response;
+    try {
+      response = await fetchPage(url, {
+        headers: {
+          Accept: "application/json",
+          "Accept-Encoding": "gzip",
+          "X-Subscription-Token": key
+        }
+      });
+    } catch (error) {
+      if (attempt < options.maxAttempts - 1) {
+        await wait(1500 * (attempt + 1));
+        continue;
       }
-    });
+      throw new Error(`Brave API 网络请求失败，已尝试 ${options.maxAttempts} 次：${error.message}`);
+    }
     if (response.ok) {
       const body = await response.json();
       return {
@@ -119,7 +130,7 @@ async function braveSearch(query, page, options) {
     }
     const detail = (await response.text()).slice(0, 300);
     if ((response.status === 429 || response.status >= 500) && attempt < options.maxAttempts - 1) {
-      await sleep(1500 * (attempt + 1));
+      await wait(1500 * (attempt + 1));
       continue;
     }
     if ([401, 403, 429].includes(response.status)) {
