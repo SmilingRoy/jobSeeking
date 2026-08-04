@@ -146,3 +146,19 @@ test("keeps compensation out of the displayed job title", () => {
   assert.equal(normalizeJobTitle("用户增长产品经理-C端AI产品方向 20-30K·15薪"), "用户增长产品经理-C端AI产品方向");
   assert.equal(normalizeJobTitle("AI 产品经理 25-50K"), "AI 产品经理");
 });
+
+test("extracts compensation from the raw card title", () => {
+  const payload = buildSitePayload({
+    jobs: [{
+      job_id: "salary-1",
+      job_url: "https://www.zhipin.com/job_detail/salary-1.html",
+      job_status: "unknown",
+      job_title: "产品经理 15-18K·15薪",
+      city: "上海",
+      salary_range: "15-18K·15薪",
+      index_evidence: { result_description: "上海青浦区 3-5年 本科" },
+    }],
+  });
+  assert.equal(payload.jobs[0].title, "产品经理");
+  assert.equal(payload.jobs[0].salary, "15-18K·15薪");
+});

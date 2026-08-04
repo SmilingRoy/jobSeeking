@@ -139,7 +139,7 @@ export function normalizeIndexedResult(result, context) {
     return { kind: "rejected", reason: "unsupported_url" };
   }
 
-  const facts = extractFacts(title, description);
+  const facts = extractFacts(rawTitle, description);
   if (!title.includes("产品经理")) {
     return { kind: "rejected", reason: "title_not_product_manager" };
   }
