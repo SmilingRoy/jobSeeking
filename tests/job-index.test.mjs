@@ -6,7 +6,8 @@ import {
   classifyBossUrl,
   mergeHistory,
   normalizeIndexedResult,
-  processSearchBatches
+  processSearchBatches,
+  summarizeQueryMetrics,
 } from "../scripts/lib/job-index.mjs";
 
 const context = {
@@ -60,6 +61,29 @@ test("rejects unconfirmed city and non-product-manager results", () => {
     description: "上海"
   }, context);
   assert.equal(wrongRole.reason, "title_not_product_manager");
+  const roleOnlyInSnippet = normalizeIndexedResult({
+    title: "上海产品运营 20-30K",
+    url: "https://www.zhipin.com/job_detail/c.html",
+    description: "上海，协助产品经理推进项目"
+  }, context);
+  assert.equal(roleOnlyInSnippet.reason, "title_not_product_manager");
+});
+
+test("summarizes marginal yield per query", () => {
+  const metrics = summarizeQueryMetrics([
+    {
+      query: "q1",
+      mode: "exact",
+      results: [
+        { title: "上海产品经理 20-30K", url: "https://www.zhipin.com/job_detail/a.html", description: "上海" },
+        { title: "上海产品运营", url: "https://www.zhipin.com/job_detail/b.html", description: "上海" },
+      ],
+    },
+  ], { provider: "fixture", collectedAt: context.collectedAt });
+  assert.equal(metrics.length, 1);
+  assert.equal(metrics[0].raw_results, 2);
+  assert.equal(metrics[0].exact_job_links, 1);
+  assert.equal(metrics[0].marginal_yield, 0.5);
 });
 
 test("deduplicates exact links across queries and preserves both evidence records", () => {

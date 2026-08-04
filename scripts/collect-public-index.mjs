@@ -1,12 +1,15 @@
 #!/usr/bin/env node
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   buildQueryPlan,
   mergeHistory,
-  processSearchBatches
+  processSearchBatches,
+  summarizeQueryMetrics,
 } from "./lib/job-index.mjs";
+import { readJsonIfExists, writeJsonAtomic, writeTextAtomic } from "./lib/atomic-json.mjs";
+import { collectPlan } from "./lib/resumable-collector.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -22,6 +25,9 @@ function parseArgs(argv) {
     terms: [],
     fixture: "fixtures/public-index-sample.json",
     history: "outputs/boss-index-history.json",
+    checkpoint: "outputs/checkpoints/public-index.json",
+    resume: false,
+    maxAttempts: 3,
     output: ""
   };
   for (let index = 0; index < argv.length; index += 1) {
@@ -37,6 +43,9 @@ function parseArgs(argv) {
     else if (token === "--term") options.terms.push(argv[++index]);
     else if (token === "--fixture") options.fixture = argv[++index];
     else if (token === "--history") options.history = argv[++index];
+    else if (token === "--checkpoint") options.checkpoint = argv[++index];
+    else if (token === "--resume") options.resume = true;
+    else if (token === "--max-attempts") options.maxAttempts = Number(argv[++index]);
     else if (token === "--output") options.output = argv[++index];
     else throw new Error(`未知参数：${token}`);
   }
@@ -44,6 +53,7 @@ function parseArgs(argv) {
   if (!Number.isInteger(options.count) || options.count < 1 || options.count > 20) throw new Error("--count 必须是 1 到 20 的整数");
   if (!Number.isInteger(options.queryLimit) || options.queryLimit < 0) throw new Error("--query-limit 必须是非负整数");
   if (!Number.isFinite(options.delayMs) || options.delayMs < 0) throw new Error("--delay-ms 必须是非负数");
+  if (!Number.isInteger(options.maxAttempts) || options.maxAttempts < 1 || options.maxAttempts > 5) throw new Error("--max-attempts 必须是 1 到 5 的整数");
   if (!["brave", "fixture"].includes(options.provider)) throw new Error("--provider 仅支持 brave 或 fixture");
   return options;
 }
@@ -63,6 +73,9 @@ function help() {
   --modes exact,listing
   --term 交易产品经理  可重复传入
   --delay-ms 1100     请求间隔
+  --max-attempts 3    限流或服务错误的最大尝试次数
+  --checkpoint PATH   逐页断点文件
+  --resume            从同配置的未完成断点继续
   --history PATH      跨轮次合并去重文件
   --output PATH       本轮输出文件
 
@@ -77,15 +90,6 @@ async function readJson(path) {
   return JSON.parse(await readFile(path, "utf8"));
 }
 
-async function readJsonIfExists(path) {
-  try {
-    return await readJson(path);
-  } catch (error) {
-    if (error.code === "ENOENT") return null;
-    throw error;
-  }
-}
-
 async function braveSearch(query, page, options) {
   const key = process.env.BRAVE_SEARCH_API_KEY;
   if (!key) throw new Error("缺少 BRAVE_SEARCH_API_KEY；可先用 --provider fixture 验证流程");
@@ -98,7 +102,7 @@ async function braveSearch(query, page, options) {
   url.searchParams.set("extra_snippets", "true");
   url.searchParams.set("result_filter", "web");
 
-  for (let attempt = 0; attempt < 3; attempt += 1) {
+  for (let attempt = 0; attempt < options.maxAttempts; attempt += 1) {
     const response = await fetch(url, {
       headers: {
         Accept: "application/json",
@@ -114,7 +118,7 @@ async function braveSearch(query, page, options) {
       };
     }
     const detail = (await response.text()).slice(0, 300);
-    if ((response.status === 429 || response.status >= 500) && attempt < 2) {
+    if ((response.status === 429 || response.status >= 500) && attempt < options.maxAttempts - 1) {
       await sleep(1500 * (attempt + 1));
       continue;
     }
@@ -128,18 +132,18 @@ async function braveSearch(query, page, options) {
 
 async function collectBrave(config, options) {
   const plan = buildQueryPlan(config, options);
-  const batches = [];
-  let requestCount = 0;
-  for (const item of plan) {
-    for (let page = 0; page < options.pages; page += 1) {
-      const pageResult = await braveSearch(item.query, page, options);
-      requestCount += 1;
-      batches.push({ ...item, page, results: pageResult.results });
-      if (!pageResult.moreResultsAvailable || pageResult.results.length < options.count) break;
-      await sleep(options.delayMs);
-    }
-  }
-  return { batches, requestCount, queryCount: plan.length };
+  const collected = await collectPlan(plan, {
+    provider: options.provider,
+    pages: options.pages,
+    count: options.count,
+    delayMs: options.delayMs,
+    checkpointPath: resolve(root, options.checkpoint),
+    resume: options.resume,
+    searchPage: (query, page) => braveSearch(query, page, options),
+    sleep,
+    now: Date.now,
+  });
+  return { ...collected, queryCount: plan.length };
 }
 
 async function collectFixture(path) {
@@ -156,6 +160,9 @@ function markdownReport(result) {
   const rejectionLines = Object.entries(result.metadata.rejection_counts)
     .map(([reason, count]) => `- ${reason}: ${count}`)
     .join("\n") || "- 无";
+  const queryLines = result.metadata.query_metrics
+    .map((item) => `| ${item.mode} | ${item.query.replaceAll("|", "\\|")} | ${item.pages} | ${item.raw_results} | ${item.exact_job_links} | ${item.duplicates} | ${(item.marginal_yield * 100).toFixed(1)}% |`)
+    .join("\n") || "| - | 无 | 0 | 0 | 0 | 0 | 0.0% |";
   return `# BOSS 公开索引采集报告
 
 - 采集时间：${result.metadata.collected_at}
@@ -163,11 +170,19 @@ function markdownReport(result) {
 - 数据性质：公开搜索索引候选，尚未验证岗位仍开放
 - 本轮检索式：${result.metadata.query_count}
 - 本轮请求：${result.metadata.request_count}
+- 断点复用页：${result.metadata.resumed_batch_count}
 - 原始结果：${result.metadata.raw_result_count}
 - 具体岗位链接：${result.jobs.length}
 - 发现列表页：${result.discovery_pages.length}
 - 本轮重复：${result.metadata.duplicate_count}
 - 历史累计具体岗位：${result.metadata.history_job_count}
+- 本轮历史新增：${result.metadata.new_history_job_count}
+
+## 检索式产出
+
+| 模式 | 检索式 | 页数 | 原始结果 | 唯一详情链接 | 重复 | 详情链接产出率 |
+|---|---|---:|---:|---:|---:|---:|
+${queryLines}
 
 ## 拒绝原因
 
@@ -197,6 +212,12 @@ export async function main(argv = process.argv.slice(2)) {
   const historyPath = resolve(root, options.history);
   const previous = await readJsonIfExists(historyPath);
   const historyRecords = mergeHistory(previous, processed);
+  const previousKeys = new Set((previous?.jobs ?? []).map((job) => job.job_id || job.job_url));
+  const newHistoryJobCount = processed.jobs.filter((job) => !previousKeys.has(job.job_id || job.job_url)).length;
+  const queryMetrics = summarizeQueryMetrics(source.batches, {
+    provider: options.provider,
+    collectedAt,
+  });
   const metadata = {
     query: "产品经理及细分方向",
     city: "上海",
@@ -206,13 +227,16 @@ export async function main(argv = process.argv.slice(2)) {
     provider: options.provider,
     query_count: source.queryCount,
     request_count: source.requestCount,
+    resumed_batch_count: source.resumedBatchCount ?? 0,
     raw_result_count: processed.stats.rawResultCount,
     duplicate_count: processed.stats.duplicateCount,
     rejection_counts: processed.stats.rejectionCounts,
     current_job_count: processed.jobs.length,
     current_discovery_page_count: processed.discovery_pages.length,
     history_job_count: historyRecords.jobs.length,
+    new_history_job_count: newHistoryJobCount,
     history_discovery_page_count: historyRecords.discovery_pages.length,
+    query_metrics: queryMetrics,
     note: source.fixtureNote ?? "索引结果不代表岗位仍开放；需使用正常登录态逐条复核。"
   };
   const current = { metadata, jobs: processed.jobs, discovery_pages: processed.discovery_pages };
@@ -221,14 +245,9 @@ export async function main(argv = process.argv.slice(2)) {
   const outputPath = resolve(root, options.output || `outputs/runs/boss-index-${stamp}.json`);
   const reportPath = resolve(root, "outputs/latest-index-report.md");
   await Promise.all([
-    mkdir(dirname(outputPath), { recursive: true }),
-    mkdir(dirname(historyPath), { recursive: true }),
-    mkdir(dirname(reportPath), { recursive: true })
-  ]);
-  await Promise.all([
-    writeFile(outputPath, `${JSON.stringify(current, null, 2)}\n`),
-    writeFile(historyPath, `${JSON.stringify(history, null, 2)}\n`),
-    writeFile(reportPath, markdownReport(current))
+    writeJsonAtomic(outputPath, current),
+    writeJsonAtomic(historyPath, history),
+    writeTextAtomic(reportPath, markdownReport(current))
   ]);
   console.log(JSON.stringify({
     provider: options.provider,
@@ -239,6 +258,7 @@ export async function main(argv = process.argv.slice(2)) {
     exact_job_links: metadata.current_job_count,
     discovery_pages: metadata.current_discovery_page_count,
     historical_exact_jobs: metadata.history_job_count,
+    new_historical_exact_jobs: metadata.new_history_job_count,
     rejected: metadata.rejection_counts
   }, null, 2));
 }
