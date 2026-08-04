@@ -75,7 +75,7 @@ function help() {
   --district-shards   按上海全市及 16 个区拆分检索式
   --modes exact,listing
   --term 交易产品经理  可重复传入
-  --input PATH         Codex 检索结果信封 JSON
+  --input PATH[,PATH]   一个或多个 Codex 检索结果信封 JSON，跨输入去重
   --delay-ms 1100     请求间隔
   --max-attempts 3    限流或服务错误的最大尝试次数
   --checkpoint PATH   逐页断点文件
@@ -172,17 +172,18 @@ async function collectFixture(path) {
   };
 }
 
-export async function collectCodex(path) {
-  const document = await readJson(path);
-  const batches = document.queries ?? document.batches;
-  if (!Array.isArray(batches)) {
+export async function collectCodex(paths) {
+  const inputPaths = Array.isArray(paths) ? paths : String(paths).split(",").filter(Boolean);
+  const documents = await Promise.all(inputPaths.map((path) => readJson(path)));
+  const batches = documents.flatMap((document) => document.queries ?? document.batches ?? []);
+  if (!batches.length || !batches.every((batch) => Array.isArray(batch.results))) {
     throw new Error("Codex 检索输入必须包含 queries 或 batches 数组");
   }
   return {
     batches,
-    requestCount: document.request_count ?? 0,
-    queryCount: document.query_count ?? batches.length,
-    fixtureNote: document.note ?? "Codex 内置网页检索结果；岗位状态、完整 JD 和公司信息仍需正常登录态复核。"
+    requestCount: documents.reduce((total, document) => total + (document.request_count ?? 0), 0),
+    queryCount: documents.reduce((total, document) => total + (document.query_count ?? document.queries?.length ?? document.batches?.length ?? 0), 0),
+    fixtureNote: documents.map((document) => document.note).filter(Boolean).join("；") || "Codex 内置网页检索结果；岗位状态、完整 JD 和公司信息仍需正常登录态复核。"
   };
 }
 
@@ -235,7 +236,7 @@ export async function main(argv = process.argv.slice(2)) {
   const source = options.provider === "brave"
     ? await collectBrave(config, options)
     : options.provider === "codex"
-      ? await collectCodex(resolve(root, options.input))
+      ? await collectCodex(options.input.split(",").map((path) => resolve(root, path)))
       : await collectFixture(resolve(root, options.fixture));
   const processed = processSearchBatches(source.batches, {
     provider: options.provider,

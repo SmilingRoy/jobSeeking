@@ -22,6 +22,12 @@ test("loads Codex search batches without turning them into verified JD records",
   assert.match(source.fixtureNote, /公开搜索索引/);
 });
 
+test("combines multiple Codex inputs before global deduplication", async () => {
+  const source = await collectCodex(["fixtures/public-index-sample.json", "fixtures/public-index-sample.json"]);
+  assert.equal(source.batches.length, 4);
+  assert.equal(source.queryCount, 4);
+});
+
 test("retries transient Brave network failures without exposing the API key", async () => {
   let calls = 0;
   const waits = [];
