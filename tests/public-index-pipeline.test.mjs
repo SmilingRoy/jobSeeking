@@ -5,7 +5,7 @@ import { join } from "node:path";
 import test from "node:test";
 import { braveSearch, collectCodex, parseArgs } from "../scripts/collect-public-index.mjs";
 import { normalizeJobTitle, processSearchBatches } from "../scripts/lib/job-index.mjs";
-import { buildSitePayload } from "../scripts/index-to-site-jobs.mjs";
+import { buildSitePayload, displayIndexSummary } from "../scripts/index-to-site-jobs.mjs";
 import { collectPlan } from "../scripts/lib/resumable-collector.mjs";
 
 test("defaults to Codex input and keeps Brave as an explicit fallback", () => {
@@ -138,13 +138,21 @@ test("maps index candidates to information-insufficient site records", () => {
   assert.equal(payload.jobs[0].recommendation, "信息不足");
   assert.equal(payload.jobs[0].score, null);
   assert.equal(payload.jobs[0].verification_status, "unverified_index_snapshot");
-  assert.match(payload.jobs[0].description, /公开索引摘要（待验证）/);
+  assert.equal(payload.jobs[0].description, "上海 增长产品经理 20-30K");
+  assert.match(payload.jobs[0].job_description_raw, /公开索引摘要（待验证）/);
 });
 
 test("keeps compensation out of the displayed job title", () => {
   assert.equal(normalizeJobTitle("产品经理 15-18K·15薪"), "产品经理");
   assert.equal(normalizeJobTitle("用户增长产品经理-C端AI产品方向 20-30K·15薪"), "用户增长产品经理-C端AI产品方向");
   assert.equal(normalizeJobTitle("AI 产品经理 25-50K"), "AI 产品经理");
+});
+
+test("shows the responsibility portion of an index summary on the card", () => {
+  assert.equal(
+    displayIndexSummary("上海徐汇区漕河泾 3-5年 学历不限；负责搭建米哈游国内外增长专项，拉动营收和 DAU。"),
+    "负责搭建米哈游国内外增长专项，拉动营收和 DAU。",
+  );
 });
 
 test("extracts compensation from the raw card title", () => {
