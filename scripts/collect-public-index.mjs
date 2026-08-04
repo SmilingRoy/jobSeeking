@@ -15,7 +15,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 export function parseArgs(argv) {
   const options = {
-    provider: "brave",
+    provider: "codex",
     pages: 3,
     count: 20,
     delayMs: 1100,
@@ -24,6 +24,7 @@ export function parseArgs(argv) {
     modes: [],
     terms: [],
     fixture: "fixtures/public-index-sample.json",
+    input: "outputs/inbox/codex-search.json",
     history: "outputs/boss-index-history.json",
     checkpoint: "outputs/checkpoints/public-index.json",
     resume: false,
@@ -42,6 +43,7 @@ export function parseArgs(argv) {
     else if (token === "--modes") options.modes = argv[++index].split(",").filter(Boolean);
     else if (token === "--term") options.terms.push(argv[++index]);
     else if (token === "--fixture") options.fixture = argv[++index];
+    else if (token === "--input") options.input = argv[++index];
     else if (token === "--history") options.history = argv[++index];
     else if (token === "--checkpoint") options.checkpoint = argv[++index];
     else if (token === "--resume") options.resume = true;
@@ -54,7 +56,7 @@ export function parseArgs(argv) {
   if (!Number.isInteger(options.queryLimit) || options.queryLimit < 0) throw new Error("--query-limit 必须是非负整数");
   if (!Number.isFinite(options.delayMs) || options.delayMs < 0) throw new Error("--delay-ms 必须是非负数");
   if (!Number.isInteger(options.maxAttempts) || options.maxAttempts < 1 || options.maxAttempts > 5) throw new Error("--max-attempts 必须是 1 到 5 的整数");
-  if (!["brave", "fixture"].includes(options.provider)) throw new Error("--provider 仅支持 brave 或 fixture");
+  if (!["codex", "brave", "fixture"].includes(options.provider)) throw new Error("--provider 仅支持 codex、brave 或 fixture");
   return options;
 }
 
@@ -62,6 +64,7 @@ function help() {
   return `上海产品经理公开索引采集器
 
 用法：
+  node scripts/collect-public-index.mjs --provider codex --input outputs/inbox/codex-search.json
   node scripts/collect-public-index.mjs --provider brave --pages 3
   node scripts/collect-public-index.mjs --provider fixture
 
@@ -72,6 +75,7 @@ function help() {
   --district-shards   按上海全市及 16 个区拆分检索式
   --modes exact,listing
   --term 交易产品经理  可重复传入
+  --input PATH         Codex 检索结果信封 JSON
   --delay-ms 1100     请求间隔
   --max-attempts 3    限流或服务错误的最大尝试次数
   --checkpoint PATH   逐页断点文件
@@ -79,7 +83,8 @@ function help() {
   --history PATH      跨轮次合并去重文件
   --output PATH       本轮输出文件
 
-Brave 模式需要环境变量 BRAVE_SEARCH_API_KEY。脚本不直接请求 BOSS，也不处理验证码或安全页。`;
+Codex 模式不在 Node 进程内调用外部 API；由 Codex 网页检索生成输入 JSON，再由本脚本做严格归一化、去重和证据保留。
+Brave 模式需要环境变量 BRAVE_SEARCH_API_KEY，作为可选备用路径。脚本不直接请求 BOSS，也不处理验证码或安全页。`;
 }
 
 function sleep(ms) {
@@ -167,6 +172,20 @@ async function collectFixture(path) {
   };
 }
 
+export async function collectCodex(path) {
+  const document = await readJson(path);
+  const batches = document.queries ?? document.batches;
+  if (!Array.isArray(batches)) {
+    throw new Error("Codex 检索输入必须包含 queries 或 batches 数组");
+  }
+  return {
+    batches,
+    requestCount: document.request_count ?? 0,
+    queryCount: document.query_count ?? batches.length,
+    fixtureNote: document.note ?? "Codex 内置网页检索结果；岗位状态、完整 JD 和公司信息仍需正常登录态复核。"
+  };
+}
+
 function markdownReport(result) {
   const rejectionLines = Object.entries(result.metadata.rejection_counts)
     .map(([reason, count]) => `- ${reason}: ${count}`)
@@ -215,7 +234,9 @@ export async function main(argv = process.argv.slice(2)) {
   const collectedAt = new Date().toISOString();
   const source = options.provider === "brave"
     ? await collectBrave(config, options)
-    : await collectFixture(resolve(root, options.fixture));
+    : options.provider === "codex"
+      ? await collectCodex(resolve(root, options.input))
+      : await collectFixture(resolve(root, options.fixture));
   const processed = processSearchBatches(source.batches, {
     provider: options.provider,
     collectedAt
@@ -233,7 +254,11 @@ export async function main(argv = process.argv.slice(2)) {
     query: "产品经理及细分方向",
     city: "上海",
     collected_at: collectedAt,
-    source: options.provider === "brave" ? "BOSS直聘公开网页索引 via Brave Search API" : "离线公开索引样本",
+    source: options.provider === "brave"
+      ? "BOSS直聘公开网页索引 via Brave Search API"
+      : options.provider === "codex"
+        ? "Codex 内置网页检索结果"
+        : "离线公开索引样本",
     verification_status: "unverified_index_snapshot",
     provider: options.provider,
     query_count: source.queryCount,
