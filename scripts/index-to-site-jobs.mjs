@@ -72,9 +72,16 @@ export function indexedRecordToSiteJob(job) {
     title_fit: "高",
     pipeline: "public_index",
     verification_status: "unverified_index_snapshot",
-    evidence_source: "BOSS直聘公开网页索引",
+    evidence_source: [{
+      type: "public_index",
+      observed_at: String(job.last_seen_at ?? job.collected_at ?? "unknown"),
+      provider: String(evidence.provider ?? "unknown"),
+      query: String(evidence.query ?? "unknown"),
+      summary: summary || "unknown",
+    }],
     capture_status: "index_snapshot",
     missing_information: missingInformation,
+    review_reasons: [],
   };
 }
 

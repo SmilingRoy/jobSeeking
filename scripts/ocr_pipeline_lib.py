@@ -298,7 +298,12 @@ def map_scored_jobs(scored: dict[str, Any]) -> list[dict[str, Any]]:
             "title_fit": "高" if evaluation.get("title_fit") == "preferred" else "unknown",
             "pipeline": "ocr_jd",
             "verification_status": job.get("verification_status", "needs_review"),
-            "evidence_source": "BOSS岗位卡片和右侧JD截图 Vision OCR + 确定性评分规则",
+            "evidence_source": [{
+                "type": "ocr_jd",
+                "observed_at": job["collected_at"],
+                "capture_status": job.get("capture_status", "unknown"),
+                "detail": "BOSS岗位卡片和右侧JD截图 Vision OCR + 确定性评分规则",
+            }],
             "capture_status": job.get("capture_status", "unknown"),
             "missing_information": job["missing_information"],
             "risk_flags": job["risk_flags"],
@@ -328,6 +333,10 @@ def validate_site_jobs(jobs: list[dict[str, Any]]) -> None:
             raise ValueError(f"{label}.recommendation 不合法")
         if job.get("verification_status") == "needs_review" and job.get("recommendation") in {"优先推荐", "可以考虑"}:
             raise ValueError(f"{label} 待复核岗位不能高等级推荐")
+        if not isinstance(job.get("evidence_source"), list) or not job["evidence_source"]:
+            raise ValueError(f"{label}.evidence_source 必须是非空数组")
+        if not isinstance(job.get("review_reasons"), list):
+            raise ValueError(f"{label}.review_reasons 必须是数组")
 
 
 def atomic_write_json(path: Path, value: Any) -> None:
