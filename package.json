@@ -17,6 +17,7 @@
     "test:collector": "node --test tests/job-index.test.mjs",
     "validate:data": "node scripts/validate-site-jobs.mjs",
     "ocr:score": "python3 scripts/ocr-and-score.py",
+    "ocr:pipeline": "python3 scripts/run-ocr-pipeline.py",
     "prepare:sites": "node scripts/prepare-sites-dist.mjs"
   },
   "dependencies": {
