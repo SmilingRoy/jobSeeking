@@ -2,7 +2,7 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { classifyBossUrl, normalizeText } from "./lib/job-index.mjs";
+import { classifyBossUrl, normalizeJobTitle, normalizeText } from "./lib/job-index.mjs";
 import { writeJsonAtomic } from "./lib/atomic-json.mjs";
 import { assertValidSiteJobs } from "./lib/site-job-contract.mjs";
 
@@ -21,7 +21,7 @@ function parseArgs(argv) {
 }
 
 export function indexedRecordToSiteJob(job) {
-  const title = normalizeText(job.job_title);
+  const title = normalizeJobTitle(job.job_title);
   const urlInfo = classifyBossUrl(job.job_url);
   if (
     urlInfo.type !== "job_detail" ||

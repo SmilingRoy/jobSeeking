@@ -53,6 +53,15 @@ export function normalizeText(value = "") {
   return decodeEntities(value).replace(/\s+/g, " ").trim();
 }
 
+export function normalizeJobTitle(value = "") {
+  const title = normalizeText(value);
+  // Search cards often append compensation to the title. Keep compensation
+  // in salary_range so the site can render the two fields independently.
+  return title
+    .replace(/\s*(?:\d+(?:\.\d+)?-\d+(?:\.\d+)?K(?:·\d+薪)?|\d+-\d+元\/(?:时|天))\s*$/i, "")
+    .trim() || title;
+}
+
 export function canonicalizeBossUrl(input) {
   try {
     const url = new URL(input);
@@ -119,7 +128,8 @@ function unknownJobFields() {
 }
 
 export function normalizeIndexedResult(result, context) {
-  const title = normalizeText(result.title);
+  const rawTitle = normalizeText(result.title);
+  const title = normalizeJobTitle(rawTitle);
   const description = normalizeText([
     result.description,
     ...(Array.isArray(result.extra_snippets) ? result.extra_snippets : [])
@@ -142,7 +152,7 @@ export function normalizeIndexedResult(result, context) {
     query: context.query,
     query_mode: context.mode,
     result_rank: context.rank,
-    result_title: title,
+    result_title: rawTitle,
     result_description: description,
     verification_status: "unverified_index_snapshot"
   };
