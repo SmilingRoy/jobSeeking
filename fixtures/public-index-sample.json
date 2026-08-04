@@ -1,0 +1,58 @@
+{
+  "captured_at": "2026-08-03T00:00:00+08:00",
+  "note": "用于离线验证采集管线。链接来自公开搜索索引；岗位状态、正文和城市仍需在登录态页面复核。",
+  "queries": [
+    {
+      "query": "site:zhipin.com/job_detail/ 上海 \"产品经理\"",
+      "mode": "exact",
+      "results": [
+        {
+          "title": "产品经理 30-60K",
+          "url": "https://www.zhipin.com/job_detail/17e4f7819c5d85bc0nd92929FFNX.html",
+          "description": "上海 产品经理 30-60K PDD"
+        },
+        {
+          "title": "产品经理 20-40K",
+          "url": "https://www.zhipin.com/job_detail/0dfccfc993b6aa520nd82t28FFtR.html",
+          "description": "上海 产品经理 20-40K 千里科技"
+        },
+        {
+          "title": "产品经理 20-26K",
+          "url": "https://www.zhipin.com/job_detail/ea9765f76f3105151nB_3NW-F1tY.html",
+          "description": "上海 产品经理 20-26K 讯联"
+        },
+        {
+          "title": "产品经理 12-15K",
+          "url": "https://www.zhipin.com/job_detail/c4f17d71ba3207050nZy2Ny1FVFU.html",
+          "description": "上海 产品经理 12-15K 逢考必过"
+        }
+      ]
+    },
+    {
+      "query": "site:zhipin.com/zhaopin/ \"上海产品经理招聘信息\"",
+      "mode": "listing",
+      "results": [
+        {
+          "title": "上海产品经理招聘信息",
+          "url": "https://www.zhipin.com/zhaopin/2e108ebc3679df791nd_29m1GQ~~/",
+          "description": "上海产品经理招聘信息公开索引页"
+        },
+        {
+          "title": "上海AI产品经理招聘信息",
+          "url": "https://www.zhipin.com/zhaopin/589c843ef89e74a103d-3t67Fw~~/",
+          "description": "上海AI产品经理招聘信息公开索引页"
+        },
+        {
+          "title": "上海增长产品经理招聘信息",
+          "url": "https://www.zhipin.com/zhaopin/80cba40f6d749d1603J63t2-GQ~~/",
+          "description": "上海增长产品经理招聘信息公开索引页"
+        },
+        {
+          "title": "上海交易产品经理招聘信息",
+          "url": "https://www.zhipin.com/zhaopin/5dbd27792e8232d90nRy09i-EA~~/",
+          "description": "上海交易产品经理招聘信息公开索引页"
+        }
+      ]
+    }
+  ]
+}
