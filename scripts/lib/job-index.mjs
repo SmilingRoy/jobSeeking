@@ -130,7 +130,7 @@ export function normalizeIndexedResult(result, context) {
   }
 
   const facts = extractFacts(title, description);
-  if (!facts.evidence.includes("产品经理")) {
+  if (!title.includes("产品经理")) {
     return { kind: "rejected", reason: "title_not_product_manager" };
   }
   if (!facts.evidence.includes("上海")) {
@@ -235,6 +235,32 @@ export function processSearchBatches(batches, options) {
     discovery_pages: [...listings.values()],
     stats: { rawResultCount, duplicateCount, rejectionCounts }
   };
+}
+
+export function summarizeQueryMetrics(batches, options) {
+  const grouped = new Map();
+  for (const batch of batches) {
+    const key = JSON.stringify([batch.mode, batch.query]);
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key).push(batch);
+  }
+  return [...grouped.values()].map((queryBatches) => {
+    const result = processSearchBatches(queryBatches, options);
+    const first = queryBatches[0];
+    return {
+      mode: first.mode,
+      query: first.query,
+      pages: queryBatches.length,
+      raw_results: result.stats.rawResultCount,
+      exact_job_links: result.jobs.length,
+      discovery_pages: result.discovery_pages.length,
+      duplicates: result.stats.duplicateCount,
+      rejection_counts: result.stats.rejectionCounts,
+      marginal_yield: result.stats.rawResultCount
+        ? Number((result.jobs.length / result.stats.rawResultCount).toFixed(4))
+        : 0,
+    };
+  });
 }
 
 function mergeRecord(existing, incoming) {
