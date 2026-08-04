@@ -6,10 +6,41 @@
 
 采集分成两层：
 
-1. 通过 Brave Search API 批量发现被公开索引的 BOSS 具体岗位链接和招聘列表页。
+1. 由 Codex 内置网页检索发现被公开索引的 BOSS 具体岗位链接和招聘列表页，并导入检索结果信封。
 2. 只把索引文本明确包含“上海”和“产品经理”的具体链接写入候选池；岗位状态、完整 JD 和公司信息保持 `unknown`，等待正常登录态复核。
 
-采集器不会直接批量请求 BOSS，不会绕过登录、安全页或验证码，也不会使用 Cookie 外传、代理池或模拟真人行为。
+采集器不会直接批量请求 BOSS，不会绕过登录、安全页或验证码，也不会使用 Cookie 外传、代理池或模拟真人行为。Brave Search API 保留为显式备用 provider。
+
+### Codex 检索导入
+
+Codex 网页检索不是 Node 进程内可直接调用的项目 API。先由 Codex 检索，再将结果整理为以下信封格式保存到 `outputs/inbox/codex-search.json`：
+
+```json
+{
+  "note": "Codex 内置网页检索结果；尚未验证岗位仍开放",
+  "queries": [
+    {
+      "query": "site:zhipin.com/job_detail/ 上海 产品经理",
+      "mode": "exact",
+      "results": [
+        {
+          "title": "产品经理 20-30K",
+          "url": "https://www.zhipin.com/job_detail/example.html",
+          "description": "上海 产品经理"
+        }
+      ]
+    }
+  ]
+}
+```
+
+然后运行：
+
+```bash
+pnpm run collect:index -- --provider codex --input outputs/inbox/codex-search.json
+```
+
+Codex 检索结果仍然是公开索引候选；列表页只能作为 discovery evidence，不能代替具体 `job_detail` 链接或完整 JD。
 
 ### 先离线试跑
 
@@ -18,7 +49,7 @@ pnpm run collect:index -- --provider fixture
 pnpm run test:collector
 ```
 
-### 批量采集公开索引
+### Brave 备用批量采集
 
 在本机终端临时设置 Brave Search API 密钥后运行：
 

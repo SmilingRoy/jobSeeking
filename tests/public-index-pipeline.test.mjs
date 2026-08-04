@@ -3,13 +3,22 @@ import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { braveSearch, parseArgs } from "../scripts/collect-public-index.mjs";
+import { braveSearch, collectCodex, parseArgs } from "../scripts/collect-public-index.mjs";
 import { buildSitePayload } from "../scripts/index-to-site-jobs.mjs";
 import { collectPlan } from "../scripts/lib/resumable-collector.mjs";
 
-test("defaults to live collection and requires fixture mode to be explicit", () => {
-  assert.equal(parseArgs([]).provider, "brave");
+test("defaults to Codex input and keeps Brave as an explicit fallback", () => {
+  assert.equal(parseArgs([]).provider, "codex");
+  assert.equal(parseArgs([]).input, "outputs/inbox/codex-search.json");
+  assert.equal(parseArgs(["--provider", "brave"]).provider, "brave");
   assert.equal(parseArgs(["--provider", "fixture"]).provider, "fixture");
+});
+
+test("loads Codex search batches without turning them into verified JD records", async () => {
+  const source = await collectCodex("fixtures/public-index-sample.json");
+  assert.equal(source.queryCount, 2);
+  assert.equal(source.batches[0].mode, "exact");
+  assert.match(source.fixtureNote, /公开搜索索引/);
 });
 
 test("retries transient Brave network failures without exposing the API key", async () => {
