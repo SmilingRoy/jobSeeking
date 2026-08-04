@@ -14,7 +14,8 @@
     "db:generate": "drizzle-kit generate",
     "collect:index": "node scripts/collect-public-index.mjs",
     "test:collector": "node --test tests/job-index.test.mjs"
-    ,"validate:data": "node scripts/validate-site-jobs.mjs"
+    ,"validate:data": "node scripts/validate-site-jobs.mjs",
+    "prepare:sites": "node scripts/prepare-sites-dist.mjs"
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",
