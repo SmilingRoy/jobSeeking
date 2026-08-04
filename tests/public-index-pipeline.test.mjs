@@ -3,8 +3,61 @@ import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
+import { braveSearch, parseArgs } from "../scripts/collect-public-index.mjs";
 import { buildSitePayload } from "../scripts/index-to-site-jobs.mjs";
 import { collectPlan } from "../scripts/lib/resumable-collector.mjs";
+
+test("defaults to live collection and requires fixture mode to be explicit", () => {
+  assert.equal(parseArgs([]).provider, "brave");
+  assert.equal(parseArgs(["--provider", "fixture"]).provider, "fixture");
+});
+
+test("retries transient Brave network failures without exposing the API key", async () => {
+  let calls = 0;
+  const waits = [];
+  const result = await braveSearch("上海 产品经理", 0, {
+    count: 20,
+    maxAttempts: 3,
+  }, {
+    apiKey: "test-secret",
+    fetch: async () => {
+      calls += 1;
+      if (calls === 1) throw new Error("socket reset");
+      return {
+        ok: true,
+        json: async () => ({
+          web: { results: [{ title: "上海产品经理" }] },
+          query: { more_results_available: false },
+        }),
+      };
+    },
+    sleep: async (milliseconds) => waits.push(milliseconds),
+  });
+  assert.equal(calls, 2);
+  assert.deepEqual(waits, [1500]);
+  assert.equal(result.results.length, 1);
+  assert.equal(result.moreResultsAvailable, false);
+});
+
+test("stops after the configured number of transient network attempts", async () => {
+  const waits = [];
+  await assert.rejects(
+    braveSearch("上海 产品经理", 0, {
+      count: 20,
+      maxAttempts: 2,
+    }, {
+      apiKey: "test-secret",
+      fetch: async () => { throw new Error("network unavailable"); },
+      sleep: async (milliseconds) => waits.push(milliseconds),
+    }),
+    (error) => {
+      assert.match(error.message, /已尝试 2 次/);
+      assert.doesNotMatch(error.message, /test-secret/);
+      return true;
+    },
+  );
+  assert.deepEqual(waits, [1500]);
+});
 
 test("resumes an interrupted collection without requesting completed pages again", async () => {
   const directory = await mkdtemp(join(tmpdir(), "job-index-checkpoint-"));
