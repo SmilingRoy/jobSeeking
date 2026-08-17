@@ -136,6 +136,13 @@ export function normalizeIndexedResult(result, context) {
   const rawTitle = normalizeText(result.title);
   const title = normalizeJobTitle(rawTitle);
   const description = normalizeText([
+    result.location,
+    result.office_location,
+    result.city,
+    result.district,
+    result.salary_range,
+    result.experience_requirement,
+    result.education_requirement,
     result.description,
     ...(Array.isArray(result.extra_snippets) ? result.extra_snippets : [])
   ].filter(Boolean).join(" "));
@@ -169,6 +176,20 @@ export function normalizeIndexedResult(result, context) {
     company_size: optionalField(result.company_size),
     office_location: optionalField(result.office_location),
   };
+  const directTags = Array.isArray(result.product_direction_tags)
+    ? result.product_direction_tags.map(normalizeText).filter(Boolean)
+    : [];
+  const directProductFormTags = Array.isArray(result.product_form_tags)
+    ? result.product_form_tags.map(normalizeText).filter(Boolean)
+    : [];
+  const directProductLayerTags = Array.isArray(result.product_layer_tags)
+    ? result.product_layer_tags.map(normalizeText).filter(Boolean)
+    : [];
+  const fieldEvidence = Object.fromEntries(
+    Object.entries(result.field_evidence ?? {})
+      .map(([field, value]) => [field, normalizeText(value)])
+      .filter(([, value]) => value)
+  );
 
   if (urlInfo.type === "listing") {
     return {
@@ -206,7 +227,24 @@ export function normalizeIndexedResult(result, context) {
       salary_range: optionalField(result.salary_range) !== UNKNOWN ? optionalField(result.salary_range) : facts.salary,
       experience_requirement: optionalField(result.experience_requirement) !== UNKNOWN ? optionalField(result.experience_requirement) : facts.experience,
       education_requirement: optionalField(result.education_requirement) !== UNKNOWN ? optionalField(result.education_requirement) : facts.education,
-      product_direction_tags: facts.tags,
+      job_description_raw: optionalField(result.job_description_raw) !== UNKNOWN
+        ? optionalField(result.job_description_raw)
+        : description || UNKNOWN,
+      responsibility_summary: optionalField(result.responsibility_summary),
+      qualification_summary: optionalField(result.qualification_summary),
+      product_direction_tags: [...new Set([...facts.tags, ...directTags])],
+      product_form_tags: directProductFormTags,
+      product_layer_tags: directProductLayerTags,
+      role_type: optionalField(result.role_type),
+      team_and_reporting: optionalField(result.team_and_reporting),
+      work_mode: optionalField(result.work_mode),
+      travel_requirement: optionalField(result.travel_requirement),
+      recruiter_activity: optionalField(result.recruiter_activity),
+      published_or_updated_at: optionalField(result.published_or_updated_at),
+      field_evidence: fieldEvidence,
+      information_confidence: result.information_confidence && typeof result.information_confidence === "object"
+        ? result.information_confidence
+        : {},
       missing_information: missingInformation,
       evaluation: {
         ...evaluationUnknown,
@@ -293,9 +331,28 @@ function mergeRecord(existing, incoming) {
     ...(existing.index_evidence_all ?? [existing.index_evidence].filter(Boolean)),
     ...(incoming.index_evidence_all ?? [incoming.index_evidence].filter(Boolean))
   ];
+  const merged = { ...existing };
+  for (const [key, value] of Object.entries(incoming)) {
+    const existingValue = merged[key];
+    const isUnknown = value === UNKNOWN || value === "" || value == null;
+    const existingKnown = existingValue !== UNKNOWN && existingValue !== "" && existingValue != null;
+    if (isUnknown && existingKnown) continue;
+    if (Array.isArray(value) && Array.isArray(existingValue)) {
+      merged[key] = [...new Set([...existingValue, ...value])];
+      continue;
+    }
+    if (key === "field_evidence" && value && typeof value === "object") {
+      merged[key] = { ...(existingValue ?? {}), ...value };
+      continue;
+    }
+    if (key === "information_confidence" && value && typeof value === "object") {
+      merged[key] = { ...(existingValue ?? {}), ...value };
+      continue;
+    }
+    merged[key] = value;
+  }
   return {
-    ...existing,
-    ...incoming,
+    ...merged,
     first_seen_at: existing.first_seen_at ?? incoming.first_seen_at,
     last_seen_at: incoming.last_seen_at,
     seen_count: (existing.seen_count ?? 1) + 1,

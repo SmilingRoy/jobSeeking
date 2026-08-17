@@ -1,19 +1,19 @@
 import { spawn } from "node:child_process";
 import { canonicalizeBossUrl } from "./job-index.mjs";
 
-const RESULT_SCHEMA = `{"queries":[{"query":"...","mode":"exact","results":[{"title":"...","url":"https://www.zhipin.com/job_detail/<id>.html","description":"上海..."}]}]}`;
+const RESULT_SCHEMA = `{"queries":[{"query":"...","mode":"exact","results":[{"title":"...","url":"https://www.zhipin.com/job_detail/<id>.html","company":"...","location":"上海...","salary_range":"...","experience_requirement":"...","education_requirement":"...","industry":"...","company_size":"...","financing_stage":"...","description":"...","responsibility_summary":"...","qualification_summary":"...","product_direction_tags":["..."],"product_form_tags":["..."],"product_layer_tags":["..."],"role_type":"...","team_and_reporting":"...","work_mode":"...","travel_requirement":"...","recruiter_activity":"...","published_or_updated_at":"...","field_evidence":{"field":"原始摘要"},"information_confidence":{"field":"high|medium|low"}}]}]}`;
 
 export function codexPrompt(query, context = {}) {
   const excluded = Array.isArray(context.excludeUrls) && context.excludeUrls.length
     ? `\n不要重复这些已见链接：${context.excludeUrls.slice(-100).join(" ")}`
     : "";
   return [
-    "使用 Codex 内置网页检索，检索上海的产品经理岗位。",
+    "使用 Codex 内置网页检索，检索上海的产品经理岗位；采集阶段不判断岗位相关性，只要城市为上海且标题含产品经理就保留。",
     `检索式：${query}`,
     `这是第 ${context.round ?? 1} 轮；请尽量寻找此前没有返回过的新岗位。${excluded}`,
     "只返回严格 JSON，不要 Markdown、解释或代码围栏。",
     `输出格式必须是：${RESULT_SCHEMA}`,
-    "结果只保留公开索引中能确认上海且标题含产品经理的岗位；列表页也可以作为结果，但必须保留原始 URL。",
+    "结果只保留公开索引中能确认上海且标题含产品经理的岗位；列表页也可以作为结果，但必须保留原始 URL。尽可能从公开摘要补齐 schema 中的字段；无法确认时使用 unknown，不要推断。每个补充字段尽量在 field_evidence 中保留对应摘要，并给出 information_confidence。",
   ].join("\n");
 }
 
