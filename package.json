@@ -16,7 +16,7 @@
     "build:index-site": "node scripts/index-to-site-jobs.mjs",
     "merge:pipelines": "node scripts/merge-job-pipelines.mjs",
     "score:v2": "python3 scripts/score-jobs-v2.py",
-    "test:matching": "python3 tests/test_matching_v2.py",
+    "test:matching": "PYTHONPATH=. python3 tests/test_matching_v2.py",
     "test:unit": "node --test tests/job-index.test.mjs tests/pipeline-integration.test.mjs tests/rendered-html.test.mjs && npm run test:matching",
     "test:all": "npm run test:unit && npm run build",
     "test:collector": "node --test tests/job-index.test.mjs",

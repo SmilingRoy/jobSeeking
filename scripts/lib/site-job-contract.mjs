@@ -124,7 +124,8 @@ export function siteJobErrors(jobs) {
         errors.push(`${label} captured_jd 缺少完成态 OCR 证据`);
       }
     }
-    if (job.hard_filter_reasons.length > 0 && job.recommendation !== "不推荐") {
+    if ((Array.isArray(job.hard_filter_reasons) ? job.hard_filter_reasons : []).length > 0
+      && job.recommendation !== "不推荐") {
       errors.push(`${label} 命中硬筛条件时必须为不推荐`);
     }
     if (job.job_status === "closed") {
