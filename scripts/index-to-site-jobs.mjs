@@ -108,7 +108,7 @@ export function indexedRecordToSiteJob(job) {
     })),
     capture_status: "index_snapshot",
     missing_information: missingInformation,
-    review_reasons: [],
+    review_reasons: Array.isArray(job.review_reasons) ? job.review_reasons : [],
   });
 }
 
@@ -118,9 +118,17 @@ function isUnknownIndexedValue(value) {
 
 function mergeIndexedRecords(existing, incoming) {
   const merged = { ...existing };
+  const conflictFields = [];
   for (const [key, value] of Object.entries(incoming)) {
     const existingValue = merged[key];
     if (isUnknownIndexedValue(value) && !isUnknownIndexedValue(existingValue)) continue;
+    if (!isUnknownIndexedValue(value) && !isUnknownIndexedValue(existingValue)
+      && !Array.isArray(value) && !Array.isArray(existingValue)
+      && !["job_id", "job_url", "collected_at", "first_seen_at", "last_seen_at", "seen_count", "index_evidence", "index_evidence_all", "field_evidence", "information_confidence"].includes(key)
+      && existingValue !== value) {
+      conflictFields.push(key);
+      continue;
+    }
     if (Array.isArray(value) && Array.isArray(existingValue)) {
       merged[key] = [...new Set([...existingValue, ...value])];
       continue;
@@ -146,6 +154,11 @@ function mergeIndexedRecords(existing, incoming) {
     ...(incoming.index_evidence_all ?? [incoming.index_evidence].filter(Boolean)),
   ];
   merged.index_evidence = merged.index_evidence_all.at(-1) ?? existing.index_evidence ?? incoming.index_evidence;
+  merged.review_reasons = [...new Set([
+    ...(existing.review_reasons ?? []),
+    ...(incoming.review_reasons ?? []),
+    ...conflictFields.map((field) => `index_conflict:${field}`),
+  ])];
   return merged;
 }
 
@@ -182,6 +195,7 @@ export function buildSitePayload(document, limit = 0) {
       input_job_count: sourceRecords.length,
       duplicate_count: deduplicated.duplicateCount,
       rejected_count: deduplicated.records.length - mapped.length,
+      review_count: jobs.filter((job) => job.review_reasons.length > 0).length,
       job_count: jobs.length,
       note: "公开索引候选尚未验证岗位开放状态或完整 JD。",
     },
