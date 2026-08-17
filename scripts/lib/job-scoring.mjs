@@ -1,5 +1,5 @@
 import scoringConfig from "../../config/job-scoring.json" with { type: "json" };
-import { isUnknown } from "./site-job-contract.mjs";
+import { isUnknown, normalizeSiteJobRecord } from "./site-job-contract.mjs";
 
 const HIGH_RECOMMENDATIONS = new Set(["优先推荐", "可以考虑"]);
 
@@ -93,6 +93,7 @@ function hardFilterReasons(job, evaluation, config) {
 
 export function scoreJob(job, config = scoringConfig) {
   assertValidScoringConfig(config);
+  job = normalizeSiteJobRecord(job, job?.pipeline ?? "public_index");
   const publicOnly = job.pipeline === "public_index" || job.verification_status === "unverified_index_snapshot";
   if (publicOnly) {
     return {

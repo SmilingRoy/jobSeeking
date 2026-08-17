@@ -15,6 +15,20 @@ export const VERIFICATION_STATUSES = Object.freeze([
   "needs_review",
 ]);
 
+export const CONTRACT_SCALAR_FIELDS = Object.freeze([
+  "id", "url", "title", "company", "city", "district", "office_location", "salary",
+  "workExperience", "education", "company_size", "financing_stage", "industry",
+  "description", "job_description_raw", "responsibilities", "requirements", "pipeline",
+  "verification_status", "capture_status", "scoring_config_version",
+]);
+
+export const CONTRACT_ARRAY_FIELDS = Object.freeze([
+  "tags", "directions", "missing_information", "review_reasons", "score_components",
+  "hard_filter_reasons",
+]);
+
+export const DEFAULT_SCORING_CONFIG_VERSION = "job-pipeline-scoring-v1.0.0";
+
 const allowedRecommendations = new Set(RECOMMENDATIONS);
 const allowedPipelines = new Set(PIPELINES);
 const allowedVerificationStatuses = new Set(VERIFICATION_STATUSES);
@@ -33,8 +47,72 @@ export function stableJobId(url) {
   return classifyBossUrl(url).jobId ?? null;
 }
 
+function scalar(value) {
+  if (isUnknown(value)) return "unknown";
+  return String(value);
+}
+
+function arrayOfStrings(value) {
+  return Array.isArray(value)
+    ? value.filter((item) => typeof item === "string" && item.trim()).map((item) => item.trim())
+    : [];
+}
+
+/** Normalize public-index, OCR, and legacy site-shaped records into one contract. */
+export function normalizeSiteJobRecord(record, pipelineHint = "public_index") {
+  if (!record || typeof record !== "object") throw new Error("岗位记录必须是对象");
+  const url = canonicalJobUrl(record.url ?? record.job_url);
+  if (!url) throw new Error(`不是具体 BOSS 详情链接: ${record.url ?? record.job_url ?? "missing"}`);
+  const pipeline = record.pipeline ?? pipelineHint;
+  const unverified = pipeline === "public_index" || record.verification_status === "unverified_index_snapshot";
+  const title = scalar(record.title ?? record.job_title);
+  const normalized = {
+    ...record,
+    id: stableJobId(url),
+    url,
+    title,
+    company: scalar(record.company ?? record.company_name),
+    city: scalar(record.city),
+    district: scalar(record.district),
+    office_location: scalar(record.office_location),
+    salary: scalar(record.salary ?? record.salary_range),
+    workExperience: scalar(record.workExperience ?? record.work_experience ?? record.experience_requirement),
+    education: scalar(record.education ?? record.education_requirement),
+    company_size: scalar(record.company_size),
+    financing_stage: scalar(record.financing_stage),
+    industry: scalar(record.industry),
+    description: scalar(record.description ?? record.job_description_raw),
+    job_description_raw: scalar(record.job_description_raw ?? record.description),
+    responsibilities: scalar(record.responsibilities ?? record.responsibility_summary),
+    requirements: scalar(record.requirements ?? record.qualification_summary),
+    pipeline: unverified ? "public_index" : pipeline,
+    verification_status: unverified ? "unverified_index_snapshot" : (record.verification_status ?? "needs_review"),
+    evidence_source: normalizeEvidenceSource(record.evidence_source, {
+      type: unverified ? "public_index" : pipeline,
+      observed_at: record.collected_at ?? record.last_seen_at ?? "unknown",
+    }),
+    capture_status: scalar(record.capture_status),
+    tags: arrayOfStrings(record.tags ?? record.product_direction_tags),
+    directions: arrayOfStrings(record.directions ?? record.product_direction_tags ?? record.tags),
+    missing_information: arrayOfStrings(record.missing_information),
+    review_reasons: arrayOfStrings(record.review_reasons),
+    score_components: Array.isArray(record.score_components) ? record.score_components : [],
+    hard_filter_reasons: arrayOfStrings(record.hard_filter_reasons),
+    match_score: unverified ? null : (record.match_score ?? null),
+    score: unverified ? null : (record.score ?? null),
+    evidence_confidence: unverified ? 0 : (record.evidence_confidence ?? 0),
+    scoring_config_version: scalar(record.scoring_config_version ?? DEFAULT_SCORING_CONFIG_VERSION),
+  };
+  if (unverified) normalized.recommendation = "信息不足";
+  return normalized;
+}
+
 export function normalizeEvidenceSource(value, fallback = {}) {
-  const entries = Array.isArray(value) ? value : (value ? [{ type: fallback.type ?? "legacy", detail: String(value) }] : []);
+  const entries = Array.isArray(value)
+    ? value
+    : (value
+      ? [{ type: fallback.type ?? "legacy", detail: String(value) }]
+      : (fallback.type ? [{ type: fallback.type }] : []));
   return entries
     .filter((entry) => entry && typeof entry === "object")
     .map((entry) => ({
@@ -60,6 +138,12 @@ export function siteJobErrors(jobs) {
     if (canonicalUrl && job.id !== stableJobId(canonicalUrl)) errors.push(`${label}.id 必须等于 BOSS 岗位 ID`);
     if (job.city !== "上海") errors.push(`${label}.city 不是上海`);
     if (!String(job.title ?? "").includes("产品经理")) errors.push(`${label}.title 不包含产品经理`);
+    for (const field of CONTRACT_SCALAR_FIELDS) {
+      if (typeof job[field] !== "string") errors.push(`${label}.${field} 必须是字符串`);
+    }
+    for (const field of CONTRACT_ARRAY_FIELDS) {
+      if (!Array.isArray(job[field])) errors.push(`${label}.${field} 必须是数组`);
+    }
     if (!allowedRecommendations.has(job.recommendation)) errors.push(`${label}.recommendation 不合法: ${job.recommendation}`);
     if (job.score !== null && (typeof job.score !== "number" || job.score < 0 || job.score > 100)) {
       errors.push(`${label}.score 不在 0-100`);

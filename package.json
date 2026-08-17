@@ -13,6 +13,7 @@
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate",
     "collect:index": "node scripts/collect-public-index.mjs",
+    "collect:index:codex-live": "node scripts/collect-public-index.mjs --provider codex --auto-loop",
     "build:index-site": "node scripts/index-to-site-jobs.mjs",
     "merge:pipelines": "node scripts/merge-job-pipelines.mjs",
     "score:v2": "python3 scripts/score-jobs-v2.py",

@@ -1,4 +1,4 @@
-import { canonicalJobUrl, isUnknown, normalizeEvidenceSource, stableJobId } from "./site-job-contract.mjs";
+import { isUnknown, normalizeSiteJobRecord, stableJobId } from "./site-job-contract.mjs";
 import { scoreJob } from "./job-scoring.mjs";
 
 const ARRAY_FIELDS = ["tags", "directions", "missing_information", "risk_flags", "interview_questions", "review_reasons"];
@@ -16,36 +16,31 @@ function timestamp(value) {
 }
 
 function normalizeRecord(record, pipelineHint) {
-  const url = canonicalJobUrl(record.url ?? record.job_url);
-  if (!url) throw new Error(`不是具体 BOSS 详情链接: ${record.url ?? record.job_url ?? "missing"}`);
-  const pipeline = record.pipeline ?? pipelineHint;
+  const normalizedInput = normalizeSiteJobRecord(record, pipelineHint);
+  const url = normalizedInput.url;
+  const pipeline = normalizedInput.pipeline;
   const completeOcrEvidence = pipeline === "ocr_jd"
-    && OCR_COMPLETE_STATUSES.has(record.capture_status)
-    && !isUnknown(record.job_description_raw)
-    && !isUnknown(record.responsibilities);
-  let verification = record.verification_status
+    && OCR_COMPLETE_STATUSES.has(normalizedInput.capture_status)
+    && !isUnknown(normalizedInput.job_description_raw)
+    && !isUnknown(normalizedInput.responsibilities);
+  let verification = normalizedInput.verification_status
     ?? (completeOcrEvidence ? "captured_jd" : (pipeline === "ocr_jd" ? "needs_review" : "unverified_index_snapshot"));
-  const reviewReasons = Array.isArray(record.review_reasons) ? [...record.review_reasons] : [];
+  const reviewReasons = [...normalizedInput.review_reasons];
   if (pipeline === "ocr_jd" && verification === "captured_jd" && !completeOcrEvidence) {
     verification = "needs_review";
-    if (!OCR_COMPLETE_STATUSES.has(record.capture_status)) reviewReasons.push(`incomplete_ocr:capture_status=${record.capture_status ?? "unknown"}`);
-    if (isUnknown(record.job_description_raw)) reviewReasons.push("incomplete_ocr:missing_job_description_raw");
-    if (isUnknown(record.responsibilities)) reviewReasons.push("incomplete_ocr:missing_responsibilities");
+    if (!OCR_COMPLETE_STATUSES.has(normalizedInput.capture_status)) reviewReasons.push(`incomplete_ocr:capture_status=${normalizedInput.capture_status}`);
+    if (isUnknown(normalizedInput.job_description_raw)) reviewReasons.push("incomplete_ocr:missing_job_description_raw");
+    if (isUnknown(normalizedInput.responsibilities)) reviewReasons.push("incomplete_ocr:missing_responsibilities");
   }
   if (pipeline === "ocr_jd" && verification === "needs_review" && reviewReasons.length === 0) {
     reviewReasons.push("incomplete_ocr:evidence_requires_review");
   }
   const normalized = {
-    ...record,
+    ...normalizedInput,
     id: stableJobId(url),
     url,
     pipeline,
     verification_status: verification,
-    evidence_source: normalizeEvidenceSource(record.evidence_source, {
-      type: pipeline,
-      observed_at: record.collected_at ?? record.last_seen_at ?? "unknown",
-    }),
-    missing_information: Array.isArray(record.missing_information) ? record.missing_information : [],
     review_reasons: unique(reviewReasons),
   };
   if (pipeline === "public_index" || verification === "unverified_index_snapshot") {

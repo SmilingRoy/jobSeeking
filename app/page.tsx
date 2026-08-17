@@ -65,7 +65,7 @@ const initialJobs: Job[] = sourceJobs.map((job) => ({
   recruiter_name: String(job.recruiter_name ?? "unknown"),
   recruiter_role: String(job.recruiter_role ?? "unknown"),
   recruiter_activity: String(job.recruiter_activity ?? "unknown"),
-  description: String(job.job_description_raw ?? "待补充 JD 信息"),
+  description: String(job.description ?? job.job_description_raw ?? "待补充 JD 信息"),
   job_description_raw: String(job.job_description_raw ?? "待补充 JD 信息"),
   responsibilities: String(job.responsibilities ?? "待补充 JD 信息"),
   requirements: String(job.requirements ?? "待补充 JD 信息"),
