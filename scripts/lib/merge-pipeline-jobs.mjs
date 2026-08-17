@@ -1,8 +1,9 @@
 import { canonicalJobUrl, isUnknown, normalizeEvidenceSource, stableJobId } from "./site-job-contract.mjs";
+import { scoreJob } from "./job-scoring.mjs";
 
 const ARRAY_FIELDS = ["tags", "directions", "missing_information", "risk_flags", "interview_questions", "review_reasons"];
 const FRESHNESS_FIELDS = ["collected_at", "last_seen_at", "published_or_updated_at", "recruiter_activity", "salary"];
-const OCR_COMPLETE_STATUSES = new Set(["captured_jd"]);
+const OCR_COMPLETE_STATUSES = new Set(["captured"]);
 const CONFLICT_FIELDS = ["title", "company", "city"];
 
 function unique(values) {
@@ -100,17 +101,20 @@ export function mergeJobPair(existingInput, incomingInput) {
     merged.recommendation = highRecommendation(merged.recommendation) ? "信息不足" : (merged.recommendation ?? "信息不足");
     merged.score = merged.recommendation === "信息不足" ? null : merged.score;
   }
-  if (conflicts.length) {
+  if (conflicts.length && (!existingVerified || incomingComplete)) {
     merged.verification_status = "needs_review";
     merged.review_reasons = unique([...(merged.review_reasons ?? []), ...conflicts.map((field) => `field_conflict:${field}`)]);
     if (highRecommendation(merged.recommendation)) merged.recommendation = "信息不足";
     if (merged.recommendation === "信息不足") merged.score = null;
+  } else if (conflicts.length) {
+    merged.review_reasons = unique([...(merged.review_reasons ?? []), ...conflicts.map((field) => `lower_evidence_conflict:${field}`)]);
   }
-  if (incoming.job_status === "closed" && !incoming.evidence_source.some((entry) => entry.type === "closure" && !isUnknown(entry.detail))) {
-    merged.job_status = existing.job_status ?? "unknown";
+  if (incoming.job_status === "closed") {
+    const hasClosureEvidence = incoming.evidence_source.some((entry) => entry.type === "closure" && !isUnknown(entry.detail));
+    merged.job_status = hasClosureEvidence ? "closed" : (existing.job_status ?? "unknown");
   }
   merged.id = stableJobId(merged.url);
-  return merged;
+  return scoreJob(merged);
 }
 
 function highRecommendation(value) {
@@ -125,7 +129,7 @@ export function mergePipelineJobs(indexDocument, ocrDocument) {
   ];
   for (const [input, pipeline] of inputs) {
     const job = normalizeRecord(input, pipeline);
-    records.set(job.url, records.has(job.url) ? mergeJobPair(records.get(job.url), job) : job);
+    records.set(job.url, records.has(job.url) ? mergeJobPair(records.get(job.url), job) : scoreJob(job));
   }
   return [...records.values()].sort((a, b) => String(a.id).localeCompare(String(b.id)));
 }

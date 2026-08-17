@@ -71,11 +71,38 @@ export function siteJobErrors(jobs) {
     if (!Array.isArray(job.evidence_source) || job.evidence_source.length === 0) errors.push(`${label}.evidence_source 必须是非空数组`);
     if (!Array.isArray(job.missing_information)) errors.push(`${label}.missing_information 必须是数组`);
     if (!Array.isArray(job.review_reasons)) errors.push(`${label}.review_reasons 必须是数组`);
+    if (job.match_score !== null && (!Number.isFinite(job.match_score) || job.match_score < 0 || job.match_score > 100)) {
+      errors.push(`${label}.match_score 不在 0-100 或 null`);
+    }
+    if (!Number.isFinite(job.evidence_confidence) || job.evidence_confidence < 0 || job.evidence_confidence > 1) {
+      errors.push(`${label}.evidence_confidence 不在 0-1`);
+    }
+    if (!Array.isArray(job.score_components)) errors.push(`${label}.score_components 必须是数组`);
+    else for (const [componentIndex, component] of job.score_components.entries()) {
+      if (!component || typeof component !== "object" || isUnknown(component.dimension) || typeof component.known !== "boolean") {
+        errors.push(`${label}.score_components[${componentIndex}] 结构不合法`);
+      }
+    }
+    if (!Array.isArray(job.hard_filter_reasons)) errors.push(`${label}.hard_filter_reasons 必须是数组`);
+    if (typeof job.scoring_config_version !== "string" || isUnknown(job.scoring_config_version)) {
+      errors.push(`${label}.scoring_config_version 缺失`);
+    }
+    if (job.match_score !== null && job.score !== null && job.score !== job.match_score) {
+      errors.push(`${label}.score 必须与 match_score 一致或为 null`);
+    }
     if (job.pipeline === "public_index" || job.verification_status === "unverified_index_snapshot") {
-      if (job.score !== null || job.recommendation !== "信息不足") errors.push(`${label} 公开索引记录不能展示分数或高等级推荐`);
+      if (job.score !== null || job.match_score !== null || job.recommendation !== "信息不足") {
+        errors.push(`${label} 公开索引记录不能展示分数或高等级推荐`);
+      }
     }
     if (job.verification_status === "needs_review" && highRecommendations.has(job.recommendation)) {
       errors.push(`${label} 待复核岗位不能高等级推荐`);
+    }
+    if (highRecommendations.has(job.recommendation) && job.evidence_confidence < 0.7) {
+      errors.push(`${label} 低证据置信度不能高等级推荐`);
+    }
+    if (highRecommendations.has(job.recommendation) && job.match_score === null) {
+      errors.push(`${label} 高等级推荐必须有 match_score`);
     }
     if (job.verification_status === "captured_jd" && (isUnknown(job.job_description_raw) || isUnknown(job.responsibilities))) {
       errors.push(`${label} captured_jd 缺少完整 JD 或职责证据`);

@@ -263,11 +263,31 @@ def build_structured_jobs(manifest: dict[str, Any], ocr_dir: Path, detail_dir: P
 def map_scored_jobs(scored: dict[str, Any]) -> list[dict[str, Any]]:
     labels = {"推荐投递": "优先推荐", "可以考虑": "可以考虑", "信息不足，待判断": "信息不足", "不推荐": "不推荐"}
     fit_map = {"high": "高", "medium": "中", "low": "低", "excluded": "低", "unknown": "unknown"}
+    config_version = str(scored.get("metadata", {}).get("scoring_config_version", "legacy-scoring-unknown"))
     mapped: list[dict[str, Any]] = []
     for job in scored.get("jobs", []):
         evaluation = job.get("evaluation", {})
         review_reasons = job.get("review_reasons") or []
-        recommendation = "信息不足" if review_reasons else labels.get(job.get("recommendation"), "信息不足")
+        known_dimensions = sum(value not in (None, "", UNKNOWN) for value in evaluation.values())
+        dimension_count = max(len(evaluation), 1)
+        complete_jd = job.get("job_description_raw") not in (None, "", UNKNOWN) and job.get("responsibility_summary") not in (None, "", UNKNOWN)
+        capture_factor = 1.0 if job.get("verification_status") == "captured_jd" and complete_jd else 0.55
+        evidence_confidence = round(known_dimensions / dimension_count * capture_factor, 3)
+        recommendation = labels.get(job.get("recommendation"), "信息不足")
+        if review_reasons or evidence_confidence < 0.7:
+            recommendation = "信息不足"
+        scoring = job.get("scoring") if isinstance(job.get("scoring"), dict) else {}
+        component_points = scoring.get("components") if isinstance(scoring.get("components"), dict) else {}
+        score_components = [
+            {
+                "dimension": dimension,
+                "classification": classification,
+                "known": classification not in (None, "", UNKNOWN),
+                "points": component_points.get(dimension),
+            }
+            for dimension, classification in evaluation.items()
+        ]
+        match_score = job.get("match_score")
         mapped.append({
             "id": str(job["job_id"]).replace("/", "-"),
             "url": job["job_url"],
@@ -293,7 +313,12 @@ def map_scored_jobs(scored: dict[str, Any]) -> list[dict[str, Any]]:
             "directions": job["product_direction_tags"],
             "collected_at": job["collected_at"],
             "recommendation": recommendation,
-            "score": job.get("match_score"),
+            "score": None if recommendation == "信息不足" else match_score,
+            "match_score": match_score,
+            "evidence_confidence": evidence_confidence,
+            "score_components": score_components,
+            "hard_filter_reasons": scoring.get("hard_filter_reasons", []),
+            "scoring_config_version": config_version,
             "responsibility_fit": fit_map.get(evaluation.get("responsibility_fit"), "unknown"),
             "title_fit": "高" if evaluation.get("title_fit") == "preferred" else "unknown",
             "pipeline": "ocr_jd",
@@ -333,6 +358,20 @@ def validate_site_jobs(jobs: list[dict[str, Any]]) -> None:
             raise ValueError(f"{label}.recommendation 不合法")
         if job.get("verification_status") == "needs_review" and job.get("recommendation") in {"优先推荐", "可以考虑"}:
             raise ValueError(f"{label} 待复核岗位不能高等级推荐")
+        match_score = job.get("match_score")
+        if match_score is not None and (not isinstance(match_score, (int, float)) or isinstance(match_score, bool) or not 0 <= match_score <= 100):
+            raise ValueError(f"{label}.match_score 不在 0-100 或 null")
+        confidence = job.get("evidence_confidence")
+        if not isinstance(confidence, (int, float)) or isinstance(confidence, bool) or not 0 <= confidence <= 1:
+            raise ValueError(f"{label}.evidence_confidence 不在 0-1")
+        if not isinstance(job.get("score_components"), list):
+            raise ValueError(f"{label}.score_components 必须是数组")
+        if not isinstance(job.get("hard_filter_reasons"), list):
+            raise ValueError(f"{label}.hard_filter_reasons 必须是数组")
+        if job.get("scoring_config_version") in (None, "", UNKNOWN):
+            raise ValueError(f"{label}.scoring_config_version 缺失")
+        if job.get("recommendation") in {"优先推荐", "可以考虑"} and confidence < 0.7:
+            raise ValueError(f"{label} 低证据置信度不能高等级推荐")
         if not isinstance(job.get("evidence_source"), list) or not job["evidence_source"]:
             raise ValueError(f"{label}.evidence_source 必须是非空数组")
         if not isinstance(job.get("review_reasons"), list):

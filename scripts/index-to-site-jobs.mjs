@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { classifyBossUrl, normalizeText } from "./lib/job-index.mjs";
 import { writeJsonAtomic } from "./lib/atomic-json.mjs";
 import { assertValidSiteJobs } from "./lib/site-job-contract.mjs";
+import { scoreJob } from "./lib/job-scoring.mjs";
 
 function parseArgs(argv) {
   const options = { input: "", output: "data/jobs.json", limit: 0 };
@@ -42,7 +43,7 @@ export function indexedRecordToSiteJob(job) {
     ? job.missing_information
     : ["岗位当前开放状态", "完整JD", "公司信息"];
 
-  return {
+  return scoreJob({
     id: String(job.job_id || urlInfo.jobId),
     url: urlInfo.canonicalUrl,
     title,
@@ -82,7 +83,7 @@ export function indexedRecordToSiteJob(job) {
     capture_status: "index_snapshot",
     missing_information: missingInformation,
     review_reasons: [],
-  };
+  });
 }
 
 export function buildSitePayload(document, limit = 0) {

@@ -5,6 +5,7 @@ import { join } from "node:path";
 import test from "node:test";
 import { mergeAndWrite } from "../scripts/merge-job-pipelines.mjs";
 import { mergeJobPair, mergePipelineJobs } from "../scripts/lib/merge-pipeline-jobs.mjs";
+import { scoreJob, scoringConfig } from "../scripts/lib/job-scoring.mjs";
 import { assertValidSiteJobs } from "../scripts/lib/site-job-contract.mjs";
 
 const url = "https://www.zhipin.com/job_detail/integration-1.html";
@@ -50,6 +51,22 @@ function ocrJob(overrides = {}) {
     collected_at: "2026-08-02T00:00:00Z",
     missing_information: ["团队规模"],
     evidence_source: [{ type: "ocr_jd", observed_at: "2026-08-02T00:00:00Z", capture_status: "captured" }],
+    evaluation: {
+      direction_fit: "priority",
+      responsibility_fit: "high",
+      product_form_fit: "priority",
+      product_layer_fit: "conditional",
+      role_fit: "preferred",
+      experience_fit: "medium",
+      company_quality: "medium",
+      team_quality: "medium",
+      growth_value: "high",
+      freshness_fit: "high",
+      title_fit: "preferred",
+      city_fit: "match",
+      mandatory_requirement_fit: "match",
+      work_mode_fit: "match",
+    },
     ...overrides,
   };
 }
@@ -65,11 +82,31 @@ test("complete OCR upgrades a public candidate and preserves index evidence", ()
 });
 
 test("later index observation cannot downgrade a verified record", () => {
-  const merged = mergeJobPair(ocrJob(), indexJob({ collected_at: "2026-08-03T00:00:00Z" }));
+  const verified = scoreJob(ocrJob());
+  const merged = mergeJobPair(verified, indexJob({ collected_at: "2026-08-03T00:00:00Z" }));
   assert.equal(merged.verification_status, "captured_jd");
-  assert.equal(merged.recommendation, "可以考虑");
-  assert.equal(merged.score, 78);
+  assert.equal(merged.recommendation, verified.recommendation);
+  assert.equal(merged.score, verified.score);
+  assert.equal(merged.evidence_confidence, verified.evidence_confidence);
   assert.match(merged.job_description_raw, /推动上线/);
+});
+
+test("lower-evidence OCR conflicts cannot downgrade a verified record", () => {
+  const verified = scoreJob(ocrJob());
+  const partial = ocrJob({
+    company: "错误公司",
+    verification_status: "needs_review",
+    capture_status: "detail_unchanged",
+    job_description_raw: "unknown",
+    responsibilities: "unknown",
+    recommendation: "信息不足",
+    score: null,
+    collected_at: "2026-08-03T00:00:00Z",
+  });
+  const merged = mergeJobPair(verified, partial);
+  assert.equal(merged.verification_status, "captured_jd");
+  assert.equal(merged.company, "示例科技");
+  assert.ok(merged.review_reasons.includes("lower_evidence_conflict:company"));
 });
 
 test("unknown fields never overwrite known fields and URLs deduplicate", () => {
@@ -82,12 +119,76 @@ test("unknown fields never overwrite known fields and URLs deduplicate", () => {
 });
 
 test("closed status requires explicit closure evidence", () => {
-  assert.throws(() => assertValidSiteJobs([ocrJob({ job_status: "closed" })]), /关闭证据/);
-  const closed = ocrJob({
+  assert.throws(() => assertValidSiteJobs([scoreJob(ocrJob({ job_status: "closed" }))]), /关闭证据/);
+  const closed = scoreJob(ocrJob({
     job_status: "closed",
     evidence_source: [{ type: "closure", observed_at: "2026-08-03T00:00:00Z", detail: "页面明确显示职位已关闭" }],
-  });
+  }));
   assert.doesNotThrow(() => assertValidSiteJobs([closed]));
+  assert.equal(closed.recommendation, "不推荐");
+  assert.deepEqual(closed.hard_filter_reasons, ["job_status=closed"]);
+});
+
+test("new explicit closure evidence updates an existing open record", () => {
+  const verified = scoreJob(ocrJob({ job_status: "open" }));
+  const closure = indexJob({
+    job_status: "closed",
+    collected_at: "2026-08-04T00:00:00Z",
+    evidence_source: [{ type: "closure", observed_at: "2026-08-04T00:00:00Z", detail: "页面明确显示职位已关闭" }],
+  });
+  const merged = mergeJobPair(verified, closure);
+  assert.equal(merged.job_status, "closed");
+  assert.equal(merged.recommendation, "不推荐");
+  assert.deepEqual(merged.hard_filter_reasons, ["job_status=closed"]);
+});
+
+test("public index records receive the complete unscored contract", () => {
+  const scored = scoreJob(indexJob());
+  assert.equal(scored.match_score, null);
+  assert.equal(scored.evidence_confidence, 0);
+  assert.deepEqual(scored.score_components, []);
+  assert.equal(scored.scoring_config_version, scoringConfig.version);
+  assertValidSiteJobs([scored]);
+});
+
+test("unknown dimensions lower confidence without lowering the known-dimension score", () => {
+  const complete = scoreJob(ocrJob());
+  const uncertain = scoreJob(ocrJob({
+    evaluation: {
+      direction_fit: "priority",
+      responsibility_fit: "high",
+      product_form_fit: "unknown",
+      product_layer_fit: "unknown",
+      role_fit: "unknown",
+      experience_fit: "unknown",
+      company_quality: "unknown",
+      team_quality: "unknown",
+      growth_value: "unknown",
+      freshness_fit: "unknown",
+    },
+  }));
+  assert.equal(uncertain.match_score, 100);
+  assert.ok(uncertain.evidence_confidence < complete.evidence_confidence);
+  assert.equal(uncertain.recommendation, "信息不足");
+  assert.equal(uncertain.score, null);
+});
+
+test("scoring is deterministic, versioned, and explainable", () => {
+  const first = scoreJob(ocrJob());
+  const second = scoreJob(ocrJob());
+  assert.deepEqual(first, second);
+  assert.equal(first.score_components.length, 10);
+  assert.equal(first.scoring_config_version, "job-pipeline-scoring-v1.0.0");
+  assert.equal(first.hard_filter_reasons.length, 0);
+  assert.ok(first.match_score >= 0 && first.match_score <= 100);
+  assert.ok(first.evidence_confidence >= 0.7);
+});
+
+test("validator rejects high recommendations with low evidence confidence", () => {
+  const unsafe = scoreJob(ocrJob());
+  unsafe.evidence_confidence = 0.2;
+  unsafe.recommendation = "优先推荐";
+  assert.throws(() => assertValidSiteJobs([unsafe]), /低证据置信度/);
 });
 
 test("conflicting OCR identity fields enter review instead of recommendation", () => {
