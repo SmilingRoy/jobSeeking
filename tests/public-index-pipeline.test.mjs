@@ -5,7 +5,7 @@ import { join } from "node:path";
 import test from "node:test";
 import { braveSearch, collectCodex, parseArgs } from "../scripts/collect-public-index.mjs";
 import { normalizeJobTitle, processSearchBatches } from "../scripts/lib/job-index.mjs";
-import { buildSitePayload, displayIndexSummary } from "../scripts/index-to-site-jobs.mjs";
+import { buildSitePayload, deduplicateIndexedRecords, displayIndexSummary } from "../scripts/index-to-site-jobs.mjs";
 import { collectPlan } from "../scripts/lib/resumable-collector.mjs";
 import { collectCodexLive, codexPrompt, parseCodexExecOutput } from "../scripts/lib/codex-search.mjs";
 import { parseWorkerArgs } from "../scripts/run-public-index-worker.mjs";
@@ -174,7 +174,7 @@ test("maps index candidates to information-insufficient site records", () => {
       job_status: "unknown",
       job_title: "上海增长产品经理 20-30K",
       city: "上海",
-      company_name: "unknown",
+      company_name: "第一家公司",
       product_direction_tags: ["用户增长"],
       index_evidence: { result_description: "上海 增长产品经理 20-30K" },
       missing_information: ["完整JD"],
@@ -236,4 +236,39 @@ test("preserves explicit company metadata from an index result", () => {
   assert.equal(result.jobs[0].industry, "互联网");
   assert.equal(result.jobs[0].financing_stage, "B轮");
   assert.equal(result.jobs[0].company_size, "500-999人");
+});
+
+test("deduplicates canonical URLs and preserves all public index evidence", () => {
+  const records = [
+    {
+      job_id: "duplicate-a",
+      job_url: "https://m.zhipin.com/job_detail/duplicate.html?from=one",
+      job_title: "增长产品经理",
+      city: "上海",
+      company_name: "第一家公司",
+      index_evidence: { provider: "codex", query: "q1", result_description: "上海；增长产品" },
+      missing_information: ["完整JD"],
+    },
+    {
+      job_id: "duplicate-b",
+      job_url: "https://www.zhipin.com/job_detail/duplicate.html?from=two",
+      job_title: "增长产品经理",
+      city: "上海",
+      company_name: "另一家公司",
+      company_size: "100-499人",
+      index_evidence: { provider: "codex", query: "q2", result_description: "上海；增长产品；示例公司" },
+      missing_information: ["招聘者信息"],
+    },
+  ];
+  const deduplicated = deduplicateIndexedRecords(records);
+  assert.equal(deduplicated.duplicateCount, 1);
+  assert.equal(deduplicated.records.length, 1);
+  assert.equal(deduplicated.records[0].company_name, "第一家公司");
+  assert.deepEqual(deduplicated.records[0].missing_information, ["完整JD", "招聘者信息"]);
+  assert.equal(deduplicated.records[0].index_evidence_all.length, 2);
+  assert.deepEqual(deduplicated.records[0].review_reasons, ["index_conflict:company_name"]);
+  const payload = buildSitePayload({ jobs: records });
+  assert.equal(payload.jobs.length, 1);
+  assert.equal(payload.jobs[0].evidence_source.length, 2);
+  assert.equal(payload.jobs[0].score, null);
 });

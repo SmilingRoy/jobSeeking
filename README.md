@@ -118,6 +118,21 @@ python3 scripts/ocr-and-score.py \\
 和网站使用的 `data/jobs.json`。只有完整 JD 和职责字段满足质量门槛的岗位，才会进入
 “推荐投递/可以考虑”；其余统一保留为“信息不足”，不根据缺失内容猜测。
 
+### 统一岗位合同
+
+`scripts/lib/site-job-contract.mjs` 是 public-index、OCR 和网站数据的唯一合同入口。
+转换和合并会统一薪资、经验、学历、区域、公司信息、职责/要求、标签、证据与评分字段；
+未知值使用 `unknown`，证据始终是对象数组。公开索引记录固定为
+`pipeline: public_index` + `verification_status: unverified_index_snapshot`，其
+`score` 与 `match_score` 必须为 `null`。完整 OCR JD 才能升级为 `captured_jd`，
+冲突或不完整记录进入 `needs_review`。
+
+合并后的数据可以用以下命令校验：
+
+```bash
+node scripts/validate-site-jobs.mjs data/jobs.json
+```
+
 A clean full-stack starter running on
 [vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
 Drizzle support.

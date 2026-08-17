@@ -4,7 +4,8 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { classifyBossUrl, normalizeJobTitle, normalizeText } from "./lib/job-index.mjs";
 import { writeJsonAtomic } from "./lib/atomic-json.mjs";
-import { assertValidSiteJobs } from "./lib/site-job-contract.mjs";
+import { assertValidSiteJobs, normalizeSiteJobRecord } from "./lib/site-job-contract.mjs";
+import { scoreJob } from "./lib/job-scoring.mjs";
 
 function parseArgs(argv) {
   const options = { input: "", output: "data/jobs.json", limit: 0 };
@@ -31,6 +32,7 @@ export function displayIndexSummary(value) {
 }
 
 export function indexedRecordToSiteJob(job) {
+  if (job?.url && !job?.job_url) return scoreJob(normalizeSiteJobRecord(job, "public_index"));
   const title = normalizeJobTitle(job.job_title);
   const urlInfo = classifyBossUrl(job.job_url);
   if (
@@ -40,7 +42,10 @@ export function indexedRecordToSiteJob(job) {
     job.job_status === "closed"
   ) return null;
 
-  const evidence = job.index_evidence ?? {};
+  const evidenceRecords = Array.isArray(job.index_evidence_all) && job.index_evidence_all.length
+    ? job.index_evidence_all
+    : (job.index_evidence ? [job.index_evidence] : []);
+  const evidence = evidenceRecords.at(-1) ?? {};
   const summary = normalizeText(evidence.result_description);
   const evidenceText = summary
     ? `公开索引摘要（待验证）：${summary}`
@@ -56,7 +61,7 @@ export function indexedRecordToSiteJob(job) {
     ? job.missing_information
     : ["岗位当前开放状态", "完整JD", "公司信息"];
 
-  return {
+  return scoreJob({
     id: String(job.job_id || urlInfo.jobId),
     url: urlInfo.canonicalUrl,
     title,
@@ -94,14 +99,89 @@ export function indexedRecordToSiteJob(job) {
     title_fit: "高",
     pipeline: "public_index",
     verification_status: "unverified_index_snapshot",
-    evidence_source: "BOSS直聘公开网页索引",
+    evidence_source: (evidenceRecords.length ? evidenceRecords : [{}]).map((entry) => ({
+      type: "public_index",
+      observed_at: String(entry.observed_at ?? job.last_seen_at ?? job.collected_at ?? "unknown"),
+      provider: String(entry.provider ?? "unknown"),
+      query: String(entry.query ?? "unknown"),
+      summary: normalizeText(entry.result_description ?? entry.summary) || "unknown",
+    })),
     capture_status: "index_snapshot",
     missing_information: missingInformation,
-  };
+    review_reasons: Array.isArray(job.review_reasons) ? job.review_reasons : [],
+  });
+}
+
+function isUnknownIndexedValue(value) {
+  return value == null || value === "" || value === "unknown";
+}
+
+function mergeIndexedRecords(existing, incoming) {
+  const merged = { ...existing };
+  const conflictFields = [];
+  for (const [key, value] of Object.entries(incoming)) {
+    const existingValue = merged[key];
+    if (isUnknownIndexedValue(value) && !isUnknownIndexedValue(existingValue)) continue;
+    if (!isUnknownIndexedValue(value) && !isUnknownIndexedValue(existingValue)
+      && !Array.isArray(value) && !Array.isArray(existingValue)
+      && !["job_id", "job_url", "collected_at", "first_seen_at", "last_seen_at", "seen_count", "index_evidence", "index_evidence_all", "field_evidence", "information_confidence"].includes(key)
+      && existingValue !== value) {
+      conflictFields.push(key);
+      continue;
+    }
+    if (Array.isArray(value) && Array.isArray(existingValue)) {
+      merged[key] = [...new Set([...existingValue, ...value])];
+      continue;
+    }
+    if ((key === "field_evidence" || key === "information_confidence")
+      && value && typeof value === "object" && !Array.isArray(value)) {
+      merged[key] = { ...(existingValue ?? {}), ...value };
+      continue;
+    }
+    if (key === "index_evidence" || key === "index_evidence_all") continue;
+    merged[key] = value;
+  }
+  merged.first_seen_at = [existing.first_seen_at, incoming.first_seen_at]
+    .filter((value) => !isUnknownIndexedValue(value))
+    .sort()[0] ?? "unknown";
+  merged.last_seen_at = [existing.last_seen_at, incoming.last_seen_at]
+    .filter((value) => !isUnknownIndexedValue(value))
+    .sort()
+    .at(-1) ?? "unknown";
+  merged.seen_count = (existing.seen_count ?? 1) + (incoming.seen_count ?? 1);
+  merged.index_evidence_all = [
+    ...(existing.index_evidence_all ?? [existing.index_evidence].filter(Boolean)),
+    ...(incoming.index_evidence_all ?? [incoming.index_evidence].filter(Boolean)),
+  ];
+  merged.index_evidence = merged.index_evidence_all.at(-1) ?? existing.index_evidence ?? incoming.index_evidence;
+  merged.review_reasons = [...new Set([
+    ...(existing.review_reasons ?? []),
+    ...(incoming.review_reasons ?? []),
+    ...conflictFields.map((field) => `index_conflict:${field}`),
+  ])];
+  return merged;
+}
+
+export function deduplicateIndexedRecords(records) {
+  const byUrl = new Map();
+  let duplicateCount = 0;
+  for (const record of records) {
+    const url = classifyBossUrl(record.job_url ?? record.url).canonicalUrl;
+    if (!url || classifyBossUrl(record.job_url ?? record.url).type !== "job_detail") continue;
+    if (byUrl.has(url)) {
+      duplicateCount += 1;
+      byUrl.set(url, mergeIndexedRecords(byUrl.get(url), record));
+    } else {
+      byUrl.set(url, record);
+    }
+  }
+  return { records: [...byUrl.values()], duplicateCount };
 }
 
 export function buildSitePayload(document, limit = 0) {
-  const mapped = (Array.isArray(document) ? document : document.jobs ?? [])
+  const sourceRecords = Array.isArray(document) ? document : document.jobs ?? [];
+  const deduplicated = deduplicateIndexedRecords(sourceRecords);
+  const mapped = deduplicated.records
     .map(indexedRecordToSiteJob)
     .filter(Boolean);
   const jobs = (limit ? mapped.slice(0, limit) : mapped);
@@ -112,6 +192,10 @@ export function buildSitePayload(document, limit = 0) {
       pipeline: "public_index",
       verification_status: "unverified_index_snapshot",
       collected_at: document.metadata?.collected_at ?? "unknown",
+      input_job_count: sourceRecords.length,
+      duplicate_count: deduplicated.duplicateCount,
+      rejected_count: deduplicated.records.length - mapped.length,
+      review_count: jobs.filter((job) => job.review_reasons.length > 0).length,
       job_count: jobs.length,
       note: "公开索引候选尚未验证岗位开放状态或完整 JD。",
     },

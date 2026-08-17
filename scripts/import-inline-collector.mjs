@@ -1,6 +1,9 @@
 import { readFile, writeFile } from "node:fs/promises";
 
-const manifestPath = process.argv[2] ?? "/Users/SmilingRoy/Documents/Codex/boss_500_current_20260804/manifest.json";
+const manifestPath = process.argv[2];
+if (!manifestPath) {
+  throw new Error("用法：node scripts/import-inline-collector.mjs MANIFEST_PATH [OUTPUT_PATH]");
+}
 const outputPath = process.argv[3] ?? new URL("../data/jobs.json", import.meta.url).pathname;
 
 const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
