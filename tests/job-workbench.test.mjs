@@ -69,3 +69,31 @@ test("only known user statuses are loaded", () => {
   storage.setItem(USER_STATE_STORAGE_KEY, JSON.stringify({ good: "已投递", bad: "删除" }));
   assert.deepEqual(loadUserStates(storage), { good: "已投递" });
 });
+
+test("strict import rejects type coercion and missing contract arrays", () => {
+  assert.throws(() => validateAndNormalizePayload({ jobs: [job({ id: 123 })] }), /id 必须是非空字符串/);
+  assert.throws(() => validateAndNormalizePayload({ jobs: [job({ company: { name: "错误类型" } })] }), /company 必须是字符串/);
+  const missingReviewReasons = job();
+  delete missingReviewReasons.review_reasons;
+  assert.throws(() => validateAndNormalizePayload({ jobs: [missingReviewReasons] }), /review_reasons 必须是字符串数组/);
+});
+
+test("strict import validates evidence entries and confidence", () => {
+  assert.throws(() => validateAndNormalizePayload({ jobs: [job({ evidence_source: ["public_index"] })] }), /evidence_source/);
+  assert.throws(() => validateAndNormalizePayload({ jobs: [job({ evidence_confidence: 1.2 })] }), /evidence_confidence/);
+});
+
+test("captured JD and closed state require supporting evidence", () => {
+  assert.throws(() => validateAndNormalizePayload({ jobs: [job({
+    pipeline: "ocr_jd",
+    verification_status: "captured_jd",
+    recommendation: "信息不足",
+  })] }), /captured_jd/);
+  assert.throws(() => validateAndNormalizePayload({ jobs: [job({ job_status: "closed" })] }), /closed/);
+});
+
+test("user state requires a stable non-empty job ID", () => {
+  const storage = new MemoryStorage();
+  assert.throws(() => updateUserState(storage, {}, "", "候选"), /岗位 ID/);
+  assert.equal(storage.getItem(USER_STATE_STORAGE_KEY), null);
+});

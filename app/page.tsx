@@ -49,8 +49,11 @@ export default function Home() {
   const [importMessage, setImportMessage] = useState("");
 
   useEffect(() => {
-    setJobs(loadPersisted(window.localStorage, bundledPayload).jobs as Job[]);
-    setUserStates(loadUserStates(window.localStorage) as Record<string, UserStatus>);
+    const restoreLocalState = window.setTimeout(() => {
+      setJobs(loadPersisted(window.localStorage, bundledPayload).jobs as Job[]);
+      setUserStates(loadUserStates(window.localStorage) as Record<string, UserStatus>);
+    }, 0);
+    return () => window.clearTimeout(restoreLocalState);
   }, []);
 
   const statusFor = (jobId: string) => userStates[jobId] ?? "未查看";
