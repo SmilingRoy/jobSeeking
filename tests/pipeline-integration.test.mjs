@@ -5,7 +5,7 @@ import { join } from "node:path";
 import test from "node:test";
 import { mergeAndWrite } from "../scripts/merge-job-pipelines.mjs";
 import { mergeJobPair, mergePipelineJobs } from "../scripts/lib/merge-pipeline-jobs.mjs";
-import { scoreJob, scoringConfig } from "../scripts/lib/job-scoring.mjs";
+import { assertValidScoringConfig, scoreJob, scoringConfig } from "../scripts/lib/job-scoring.mjs";
 import { assertValidSiteJobs } from "../scripts/lib/site-job-contract.mjs";
 
 const url = "https://www.zhipin.com/job_detail/integration-1.html";
@@ -109,6 +109,20 @@ test("lower-evidence OCR conflicts cannot downgrade a verified record", () => {
   assert.ok(merged.review_reasons.includes("lower_evidence_conflict:company"));
 });
 
+test("an incomplete OCR record cannot claim captured_jd", () => {
+  const [normalized] = mergePipelineJobs({ jobs: [] }, { jobs: [ocrJob({
+    capture_status: "detail_unchanged",
+    job_description_raw: "unknown",
+    responsibilities: "unknown",
+    review_reasons: [],
+  })] });
+  assert.equal(normalized.verification_status, "needs_review");
+  assert.equal(normalized.recommendation, "信息不足");
+  assert.equal(normalized.score, null);
+  assert.ok(normalized.review_reasons.includes("incomplete_ocr:capture_status=detail_unchanged"));
+  assertValidSiteJobs([normalized]);
+});
+
 test("unknown fields never overwrite known fields and URLs deduplicate", () => {
   const [merged] = mergePipelineJobs(
     { jobs: [indexJob({ company: "索引公司" }), indexJob({ url: "https://m.zhipin.com/job_detail/integration-1.html?from=x" })] },
@@ -122,7 +136,10 @@ test("closed status requires explicit closure evidence", () => {
   assert.throws(() => assertValidSiteJobs([scoreJob(ocrJob({ job_status: "closed" }))]), /关闭证据/);
   const closed = scoreJob(ocrJob({
     job_status: "closed",
-    evidence_source: [{ type: "closure", observed_at: "2026-08-03T00:00:00Z", detail: "页面明确显示职位已关闭" }],
+    evidence_source: [
+      { type: "ocr_jd", observed_at: "2026-08-02T00:00:00Z", capture_status: "captured" },
+      { type: "closure", observed_at: "2026-08-03T00:00:00Z", detail: "页面明确显示职位已关闭" },
+    ],
   }));
   assert.doesNotThrow(() => assertValidSiteJobs([closed]));
   assert.equal(closed.recommendation, "不推荐");
@@ -184,11 +201,28 @@ test("scoring is deterministic, versioned, and explainable", () => {
   assert.ok(first.evidence_confidence >= 0.7);
 });
 
+test("invalid scoring configuration fails closed instead of silently changing scores", () => {
+  const invalid = structuredClone(scoringConfig);
+  invalid.thresholds = { review: 80, consider: 70, preferred: 60 };
+  assert.throws(() => assertValidScoringConfig(invalid), /review <= consider <= preferred/);
+  assert.throws(() => scoreJob(ocrJob(), invalid), /review <= consider <= preferred/);
+});
+
 test("validator rejects high recommendations with low evidence confidence", () => {
   const unsafe = scoreJob(ocrJob());
   unsafe.evidence_confidence = 0.2;
   unsafe.recommendation = "优先推荐";
   assert.throws(() => assertValidSiteJobs([unsafe]), /低证据置信度/);
+});
+
+test("validator rejects semantically inconsistent pipeline evidence", () => {
+  const inconsistent = scoreJob(ocrJob());
+  inconsistent.pipeline = "public_index";
+  assert.throws(() => assertValidSiteJobs([inconsistent]), /pipeline 与 verification_status 不一致/);
+
+  const unsupported = scoreJob(ocrJob());
+  unsupported.evidence_source = [{ type: "public_index", observed_at: "2026-08-03T00:00:00Z" }];
+  assert.throws(() => assertValidSiteJobs([unsupported]), /完成态 OCR 证据/);
 });
 
 test("conflicting OCR identity fields enter review instead of recommendation", () => {

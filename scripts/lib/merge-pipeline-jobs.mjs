@@ -19,7 +19,22 @@ function normalizeRecord(record, pipelineHint) {
   const url = canonicalJobUrl(record.url ?? record.job_url);
   if (!url) throw new Error(`不是具体 BOSS 详情链接: ${record.url ?? record.job_url ?? "missing"}`);
   const pipeline = record.pipeline ?? pipelineHint;
-  const verification = record.verification_status ?? (pipeline === "ocr_jd" ? "needs_review" : "unverified_index_snapshot");
+  const completeOcrEvidence = pipeline === "ocr_jd"
+    && OCR_COMPLETE_STATUSES.has(record.capture_status)
+    && !isUnknown(record.job_description_raw)
+    && !isUnknown(record.responsibilities);
+  let verification = record.verification_status
+    ?? (completeOcrEvidence ? "captured_jd" : (pipeline === "ocr_jd" ? "needs_review" : "unverified_index_snapshot"));
+  const reviewReasons = Array.isArray(record.review_reasons) ? [...record.review_reasons] : [];
+  if (pipeline === "ocr_jd" && verification === "captured_jd" && !completeOcrEvidence) {
+    verification = "needs_review";
+    if (!OCR_COMPLETE_STATUSES.has(record.capture_status)) reviewReasons.push(`incomplete_ocr:capture_status=${record.capture_status ?? "unknown"}`);
+    if (isUnknown(record.job_description_raw)) reviewReasons.push("incomplete_ocr:missing_job_description_raw");
+    if (isUnknown(record.responsibilities)) reviewReasons.push("incomplete_ocr:missing_responsibilities");
+  }
+  if (pipeline === "ocr_jd" && verification === "needs_review" && reviewReasons.length === 0) {
+    reviewReasons.push("incomplete_ocr:evidence_requires_review");
+  }
   const normalized = {
     ...record,
     id: stableJobId(url),
@@ -31,7 +46,7 @@ function normalizeRecord(record, pipelineHint) {
       observed_at: record.collected_at ?? record.last_seen_at ?? "unknown",
     }),
     missing_information: Array.isArray(record.missing_information) ? record.missing_information : [],
-    review_reasons: Array.isArray(record.review_reasons) ? record.review_reasons : [],
+    review_reasons: unique(reviewReasons),
   };
   if (pipeline === "public_index" || verification === "unverified_index_snapshot") {
     normalized.pipeline = "public_index";

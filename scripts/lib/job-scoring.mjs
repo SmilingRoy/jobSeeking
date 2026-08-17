@@ -3,6 +3,43 @@ import { isUnknown } from "./site-job-contract.mjs";
 
 const HIGH_RECOMMENDATIONS = new Set(["优先推荐", "可以考虑"]);
 
+export function assertValidScoringConfig(config) {
+  if (!config || typeof config !== "object") throw new Error("scoring config 必须是对象");
+  if (typeof config.version !== "string" || !config.version.trim()) throw new Error("scoring config.version 缺失");
+  if (!Number.isFinite(config.confidence_floor_for_recommendation)
+    || config.confidence_floor_for_recommendation < 0
+    || config.confidence_floor_for_recommendation > 1) {
+    throw new Error("scoring config.confidence_floor_for_recommendation 必须在 0-1");
+  }
+  if (!config.weights || typeof config.weights !== "object" || !Object.keys(config.weights).length) {
+    throw new Error("scoring config.weights 必须是非空对象");
+  }
+  for (const [dimension, weight] of Object.entries(config.weights)) {
+    if (!Number.isFinite(weight) || weight <= 0) throw new Error(`scoring config.weights.${dimension} 必须是正数`);
+    const values = config.values?.[dimension];
+    if (!values || typeof values !== "object" || !("unknown" in values) || values.unknown !== null) {
+      throw new Error(`scoring config.values.${dimension}.unknown 必须显式为 null`);
+    }
+    for (const [classification, factor] of Object.entries(values)) {
+      if (factor !== null && (!Number.isFinite(factor) || factor < 0 || factor > 1)) {
+        throw new Error(`scoring config.values.${dimension}.${classification} 必须在 0-1 或为 null`);
+      }
+    }
+  }
+  const thresholds = config.thresholds;
+  if (!thresholds || ![thresholds.review, thresholds.consider, thresholds.preferred]
+    .every((value) => Number.isFinite(value) && value >= 0 && value <= 100)) {
+    throw new Error("scoring config.thresholds 必须在 0-100");
+  }
+  if (!(thresholds.review <= thresholds.consider && thresholds.consider <= thresholds.preferred)) {
+    throw new Error("scoring config.thresholds 必须满足 review <= consider <= preferred");
+  }
+  if (!config.hard_filter_values || typeof config.hard_filter_values !== "object"
+    || Object.values(config.hard_filter_values).some((values) => !Array.isArray(values))) {
+    throw new Error("scoring config.hard_filter_values 必须由数组组成");
+  }
+}
+
 function unique(values) {
   return [...new Set(values.filter((value) => value != null && value !== ""))];
 }
@@ -55,6 +92,7 @@ function hardFilterReasons(job, evaluation, config) {
 }
 
 export function scoreJob(job, config = scoringConfig) {
+  assertValidScoringConfig(config);
   const publicOnly = job.pipeline === "public_index" || job.verification_status === "unverified_index_snapshot";
   if (publicOnly) {
     return {

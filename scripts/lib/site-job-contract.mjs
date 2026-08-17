@@ -38,9 +38,9 @@ export function normalizeEvidenceSource(value, fallback = {}) {
   return entries
     .filter((entry) => entry && typeof entry === "object")
     .map((entry) => ({
+      ...entry,
       type: String(entry.type ?? fallback.type ?? "unknown"),
       observed_at: String(entry.observed_at ?? fallback.observed_at ?? "unknown"),
-      ...entry,
     }));
 }
 
@@ -69,6 +69,11 @@ export function siteJobErrors(jobs) {
       errors.push(`${label}.verification_status 不合法: ${job.verification_status}`);
     }
     if (!Array.isArray(job.evidence_source) || job.evidence_source.length === 0) errors.push(`${label}.evidence_source 必须是非空数组`);
+    else for (const [evidenceIndex, evidence] of job.evidence_source.entries()) {
+      if (!evidence || typeof evidence !== "object" || isUnknown(evidence.type)) {
+        errors.push(`${label}.evidence_source[${evidenceIndex}].type 缺失`);
+      }
+    }
     if (!Array.isArray(job.missing_information)) errors.push(`${label}.missing_information 必须是数组`);
     if (!Array.isArray(job.review_reasons)) errors.push(`${label}.review_reasons 必须是数组`);
     if (job.match_score !== null && (!Number.isFinite(job.match_score) || job.match_score < 0 || job.match_score > 100)) {
@@ -95,6 +100,12 @@ export function siteJobErrors(jobs) {
         errors.push(`${label} 公开索引记录不能展示分数或高等级推荐`);
       }
     }
+    if ((job.pipeline === "public_index") !== (job.verification_status === "unverified_index_snapshot")) {
+      errors.push(`${label}.pipeline 与 verification_status 不一致`);
+    }
+    if (job.verification_status === "needs_review" && job.review_reasons.length === 0) {
+      errors.push(`${label} 待复核岗位必须说明 review_reasons`);
+    }
     if (job.verification_status === "needs_review" && highRecommendations.has(job.recommendation)) {
       errors.push(`${label} 待复核岗位不能高等级推荐`);
     }
@@ -106,6 +117,15 @@ export function siteJobErrors(jobs) {
     }
     if (job.verification_status === "captured_jd" && (isUnknown(job.job_description_raw) || isUnknown(job.responsibilities))) {
       errors.push(`${label} captured_jd 缺少完整 JD 或职责证据`);
+    }
+    if (job.verification_status === "captured_jd") {
+      const hasOcrEvidence = job.evidence_source.some((entry) => entry?.type === "ocr_jd");
+      if (!hasOcrEvidence || job.capture_status !== "captured") {
+        errors.push(`${label} captured_jd 缺少完成态 OCR 证据`);
+      }
+    }
+    if (job.hard_filter_reasons.length > 0 && job.recommendation !== "不推荐") {
+      errors.push(`${label} 命中硬筛条件时必须为不推荐`);
     }
     if (job.job_status === "closed") {
       const closureEvidence = Array.isArray(job.evidence_source) && job.evidence_source.some((entry) => entry?.type === "closure" && !isUnknown(entry?.detail));
