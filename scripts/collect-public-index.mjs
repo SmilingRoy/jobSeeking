@@ -10,6 +10,7 @@ import {
 } from "./lib/job-index.mjs";
 import { readJsonIfExists, writeJsonAtomic, writeTextAtomic } from "./lib/atomic-json.mjs";
 import { collectPlan } from "./lib/resumable-collector.mjs";
+import { collectCodexLive } from "./lib/codex-search.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -29,6 +30,9 @@ export function parseArgs(argv) {
     checkpoint: "outputs/checkpoints/public-index.json",
     resume: false,
     maxAttempts: 3,
+    autoLoop: false,
+    maxRounds: 10,
+    codexCommand: "codex",
     output: ""
   };
   for (let index = 0; index < argv.length; index += 1) {
@@ -48,6 +52,9 @@ export function parseArgs(argv) {
     else if (token === "--checkpoint") options.checkpoint = argv[++index];
     else if (token === "--resume") options.resume = true;
     else if (token === "--max-attempts") options.maxAttempts = Number(argv[++index]);
+    else if (token === "--auto-loop") options.autoLoop = true;
+    else if (token === "--max-rounds") options.maxRounds = Number(argv[++index]);
+    else if (token === "--codex-command") options.codexCommand = argv[++index];
     else if (token === "--output") options.output = argv[++index];
     else throw new Error(`未知参数：${token}`);
   }
@@ -56,6 +63,7 @@ export function parseArgs(argv) {
   if (!Number.isInteger(options.queryLimit) || options.queryLimit < 0) throw new Error("--query-limit 必须是非负整数");
   if (!Number.isFinite(options.delayMs) || options.delayMs < 0) throw new Error("--delay-ms 必须是非负数");
   if (!Number.isInteger(options.maxAttempts) || options.maxAttempts < 1 || options.maxAttempts > 5) throw new Error("--max-attempts 必须是 1 到 5 的整数");
+  if (!Number.isInteger(options.maxRounds) || options.maxRounds < 1 || options.maxRounds > 50) throw new Error("--max-rounds 必须是 1 到 50 的整数");
   if (!["codex", "brave", "fixture"].includes(options.provider)) throw new Error("--provider 仅支持 codex、brave 或 fixture");
   return options;
 }
@@ -78,12 +86,15 @@ function help() {
   --input PATH[,PATH]   一个或多个 Codex 检索结果信封 JSON，跨输入去重
   --delay-ms 1100     请求间隔
   --max-attempts 3    限流或服务错误的最大尝试次数
+  --auto-loop         Codex provider 在 Node 进程内自动调用并循环到无新增岗位
+  --max-rounds N      自动循环最多轮数，默认 10
+  --codex-command CMD Codex CLI 可执行文件，默认 codex
   --checkpoint PATH   逐页断点文件
   --resume            从同配置的未完成断点继续
   --history PATH      跨轮次合并去重文件
   --output PATH       本轮输出文件
 
-Codex 模式不在 Node 进程内调用外部 API；由 Codex 网页检索生成输入 JSON，再由本脚本做严格归一化、去重和证据保留。
+Codex 默认从 --input 读取检索信封；使用 --auto-loop 时由 Node 进程调用 Codex CLI 的 --search exec，并按轮次去重直到无新增岗位。
 Brave 模式需要环境变量 BRAVE_SEARCH_API_KEY，作为可选备用路径。脚本不直接请求 BOSS，也不处理验证码或安全页。`;
 }
 
@@ -233,17 +244,22 @@ export async function main(argv = process.argv.slice(2)) {
   }
   const config = await readJson(resolve(root, "config/job-queries.json"));
   const collectedAt = new Date().toISOString();
+  const historyPath = resolve(root, options.history);
+  const previous = await readJsonIfExists(historyPath);
   const source = options.provider === "brave"
     ? await collectBrave(config, options)
     : options.provider === "codex"
-      ? await collectCodex(options.input.split(",").map((path) => resolve(root, path)))
+      ? options.autoLoop
+        ? await collectCodexLive(config, options, {
+          plan: buildQueryPlan(config, options),
+          seenUrls: (previous?.jobs ?? []).map((job) => job.job_url).filter(Boolean),
+        })
+        : await collectCodex(options.input.split(",").map((path) => resolve(root, path)))
       : await collectFixture(resolve(root, options.fixture));
   const processed = processSearchBatches(source.batches, {
     provider: options.provider,
     collectedAt
   });
-  const historyPath = resolve(root, options.history);
-  const previous = await readJsonIfExists(historyPath);
   const historyRecords = mergeHistory(previous, processed);
   const previousKeys = new Set((previous?.jobs ?? []).map((job) => job.job_id || job.job_url));
   const newHistoryJobCount = processed.jobs.filter((job) => !previousKeys.has(job.job_id || job.job_url)).length;

@@ -7,12 +7,46 @@ import { braveSearch, collectCodex, parseArgs } from "../scripts/collect-public-
 import { normalizeJobTitle, processSearchBatches } from "../scripts/lib/job-index.mjs";
 import { buildSitePayload, displayIndexSummary } from "../scripts/index-to-site-jobs.mjs";
 import { collectPlan } from "../scripts/lib/resumable-collector.mjs";
+import { collectCodexLive, codexPrompt, parseCodexExecOutput } from "../scripts/lib/codex-search.mjs";
 
 test("defaults to Codex input and keeps Brave as an explicit fallback", () => {
   assert.equal(parseArgs([]).provider, "codex");
   assert.equal(parseArgs([]).input, "outputs/inbox/codex-search.json");
   assert.equal(parseArgs(["--provider", "brave"]).provider, "brave");
   assert.equal(parseArgs(["--provider", "fixture"]).provider, "fixture");
+  assert.equal(parseArgs(["--auto-loop", "--max-rounds", "4"]).autoLoop, true);
+  assert.equal(parseArgs(["--auto-loop", "--max-rounds", "4"]).maxRounds, 4);
+});
+
+test("parses Codex exec JSONL final messages", () => {
+  const output = [
+    JSON.stringify({ type: "turn.started" }),
+    JSON.stringify({ type: "item.completed", item: { type: "agent_message", text: '{"queries":[{"query":"q","results":[]}]}' } }),
+  ].join("\n");
+  assert.equal(parseCodexExecOutput(output).queries.length, 1);
+});
+
+test("Codex live loop stops after a round with no new links", async () => {
+  const prompts = [];
+  let calls = 0;
+  const result = await collectCodexLive({}, { maxRounds: 5 }, {
+    plan: [{ query: "上海 产品经理", mode: "exact" }],
+    search: async (prompt) => {
+      prompts.push(prompt);
+      calls += 1;
+      return calls === 1
+        ? { queries: [{ query: "上海 产品经理", mode: "exact", results: [{ title: "产品经理", url: "https://www.zhipin.com/job_detail/new.html", description: "上海" }] }] }
+        : { queries: [{ query: "上海 产品经理", mode: "exact", results: [] }] };
+    },
+  });
+  assert.equal(result.requestCount, 2);
+  assert.equal(result.rounds, 2);
+  assert.match(prompts[1], /不要重复.*new\.html/);
+});
+
+test("Codex prompts require a machine-readable search envelope", () => {
+  assert.match(codexPrompt("上海 AI产品经理"), /严格 JSON/);
+  assert.match(codexPrompt("上海 AI产品经理", { round: 2 }), /第 2 轮/);
 });
 
 test("loads Codex search batches without turning them into verified JD records", async () => {
