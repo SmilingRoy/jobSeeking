@@ -2,7 +2,7 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { classifyBossUrl, normalizeText } from "./lib/job-index.mjs";
+import { classifyBossUrl, normalizeJobTitle, normalizeText } from "./lib/job-index.mjs";
 import { writeJsonAtomic } from "./lib/atomic-json.mjs";
 import { assertValidSiteJobs } from "./lib/site-job-contract.mjs";
 
@@ -20,8 +20,18 @@ function parseArgs(argv) {
   return options;
 }
 
+export function displayIndexSummary(value) {
+  const summary = normalizeText(value);
+  if (!summary) return "";
+  // Index cards commonly begin with location/experience/education metadata;
+  // keep that evidence in job_description_raw but show the responsibility text
+  // as the card summary.
+  if (/^上海[^；]*；/.test(summary)) return summary.slice(summary.indexOf("；") + 1).trim() || summary;
+  return summary;
+}
+
 export function indexedRecordToSiteJob(job) {
-  const title = normalizeText(job.job_title);
+  const title = normalizeJobTitle(job.job_title);
   const urlInfo = classifyBossUrl(job.job_url);
   if (
     urlInfo.type !== "job_detail" ||
@@ -34,6 +44,10 @@ export function indexedRecordToSiteJob(job) {
   const summary = normalizeText(evidence.result_description);
   const evidenceText = summary
     ? `公开索引摘要（待验证）：${summary}`
+    : "公开索引只确认了上海、产品经理标题和具体岗位链接；完整 JD 待验证。";
+  const displaySummary = displayIndexSummary(summary);
+  const cardDescription = displaySummary
+    ? displaySummary
     : "公开索引只确认了上海、产品经理标题和具体岗位链接；完整 JD 待验证。";
   const directions = Array.isArray(job.product_direction_tags)
     ? job.product_direction_tags.filter((item) => typeof item === "string" && item.trim())
@@ -59,7 +73,7 @@ export function indexedRecordToSiteJob(job) {
     recruiter_name: String(job.recruiter_name ?? "unknown"),
     recruiter_role: String(job.recruiter_role ?? "unknown"),
     recruiter_activity: String(job.recruiter_activity ?? "unknown"),
-    description: evidenceText,
+    description: cardDescription,
     job_description_raw: evidenceText,
     responsibilities: "unknown",
     requirements: "unknown",

@@ -40,6 +40,20 @@ Codex 网页检索不是 Node 进程内可直接调用的项目 API。先由 Cod
 pnpm run collect:index -- --provider codex --input outputs/inbox/codex-search.json
 ```
 
+### Node 内自动调用 Codex 并循环检索
+
+本机已登录 Codex CLI 时，可以让 Node 进程直接启动 `codex --search exec`，由 Codex 返回机器可读的检索信封。每轮会把已见的详情链接放入下一轮提示，整轮没有新增岗位时停止：
+
+```bash
+pnpm run collect:index -- \
+  --provider codex \
+  --auto-loop \
+  --max-rounds 10 \
+  --history outputs/boss-index-history.json
+```
+
+`--auto-loop` 需要本机 Codex CLI 可执行、已完成登录且允许写入 Codex 状态目录；可用 `--codex-command` 指定 CLI 路径。若 CLI 不可用，继续使用上面的 `--input` 信封模式。自动循环最多运行 `--max-rounds` 轮，并在一轮没有新 `job_detail` 链接时结束；结果仍经过上海、产品经理、具体详情链接和历史去重校验。
+
 Codex 检索结果仍然是公开索引候选；列表页只能作为 discovery evidence，不能代替具体 `job_detail` 链接或完整 JD。
 
 ### 先离线试跑

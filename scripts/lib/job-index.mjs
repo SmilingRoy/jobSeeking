@@ -53,6 +53,15 @@ export function normalizeText(value = "") {
   return decodeEntities(value).replace(/\s+/g, " ").trim();
 }
 
+export function normalizeJobTitle(value = "") {
+  const title = normalizeText(value);
+  // Search cards often append compensation to the title. Keep compensation
+  // in salary_range so the site can render the two fields independently.
+  return title
+    .replace(/\s*(?:\d+(?:\.\d+)?-\d+(?:\.\d+)?K(?:·\d+薪)?|\d+-\d+元\/(?:时|天))\s*$/i, "")
+    .trim() || title;
+}
+
 export function canonicalizeBossUrl(input) {
   try {
     const url = new URL(input);
@@ -118,8 +127,14 @@ function unknownJobFields() {
   };
 }
 
+function optionalField(value) {
+  const normalized = normalizeText(value);
+  return normalized || UNKNOWN;
+}
+
 export function normalizeIndexedResult(result, context) {
-  const title = normalizeText(result.title);
+  const rawTitle = normalizeText(result.title);
+  const title = normalizeJobTitle(rawTitle);
   const description = normalizeText([
     result.description,
     ...(Array.isArray(result.extra_snippets) ? result.extra_snippets : [])
@@ -129,7 +144,7 @@ export function normalizeIndexedResult(result, context) {
     return { kind: "rejected", reason: "unsupported_url" };
   }
 
-  const facts = extractFacts(title, description);
+  const facts = extractFacts(rawTitle, description);
   if (!title.includes("产品经理")) {
     return { kind: "rejected", reason: "title_not_product_manager" };
   }
@@ -142,9 +157,17 @@ export function normalizeIndexedResult(result, context) {
     query: context.query,
     query_mode: context.mode,
     result_rank: context.rank,
-    result_title: title,
+    result_title: rawTitle,
     result_description: description,
     verification_status: "unverified_index_snapshot"
+  };
+
+  const sourceFields = {
+    company_name: optionalField(result.company_name ?? result.company),
+    industry: optionalField(result.industry),
+    financing_stage: optionalField(result.financing_stage),
+    company_size: optionalField(result.company_size),
+    office_location: optionalField(result.office_location),
   };
 
   if (urlInfo.type === "listing") {
@@ -177,11 +200,12 @@ export function normalizeIndexedResult(result, context) {
       job_status: UNKNOWN,
       job_title: title || UNKNOWN,
       ...unknownJobFields(),
+      ...sourceFields,
       city: "上海",
       district: facts.district,
-      salary_range: facts.salary,
-      experience_requirement: facts.experience,
-      education_requirement: facts.education,
+      salary_range: optionalField(result.salary_range) !== UNKNOWN ? optionalField(result.salary_range) : facts.salary,
+      experience_requirement: optionalField(result.experience_requirement) !== UNKNOWN ? optionalField(result.experience_requirement) : facts.experience,
+      education_requirement: optionalField(result.education_requirement) !== UNKNOWN ? optionalField(result.education_requirement) : facts.education,
       product_direction_tags: facts.tags,
       missing_information: missingInformation,
       evaluation: {
