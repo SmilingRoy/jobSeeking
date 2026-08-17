@@ -48,6 +48,32 @@ test("keeps only Shanghai product-manager evidence as an unverified schema recor
   assert.equal(normalized.value.index_evidence.verification_status, "unverified_index_snapshot");
 });
 
+test("preserves structured enrichment fields and location evidence", () => {
+  const normalized = normalizeIndexedResult({
+    title: "AI产品经理 25-40K",
+    url: "https://www.zhipin.com/job_detail/enriched.html",
+    company: "示例公司",
+    location: "上海杨浦区五角场",
+    salary_range: "25-40K",
+    experience_requirement: "3-5年",
+    education_requirement: "本科",
+    description: "负责AI应用从0到1落地",
+    responsibility_summary: "负责需求分析、方案设计和上线复盘",
+    qualification_summary: "具备互联网产品经验",
+    product_form_tags: ["App"],
+    product_layer_tags: ["C端用户层"],
+    role_type: "高级产品经理",
+    field_evidence: { responsibility_summary: "负责需求分析、方案设计和上线复盘" },
+    information_confidence: { company: "medium" }
+  }, context);
+  assert.equal(normalized.kind, "job");
+  assert.equal(normalized.value.district, "杨浦区");
+  assert.equal(normalized.value.responsibility_summary, "负责需求分析、方案设计和上线复盘");
+  assert.deepEqual(normalized.value.product_form_tags, ["App"]);
+  assert.deepEqual(normalized.value.product_layer_tags, ["C端用户层"]);
+  assert.equal(normalized.value.field_evidence.responsibility_summary, "负责需求分析、方案设计和上线复盘");
+});
+
 test("rejects unconfirmed city and non-product-manager results", () => {
   const missingCity = normalizeIndexedResult({
     title: "产品经理 20-30K",
@@ -103,6 +129,20 @@ test("merges repeated runs into stable history", () => {
   assert.equal(merged.jobs.length, 2);
   assert.equal(merged.jobs.find((job) => job.job_id === "a").first_seen_at, "t1");
   assert.equal(merged.jobs.find((job) => job.job_id === "a").seen_count, 2);
+});
+
+test("does not downgrade known fields during evidence merge", () => {
+  const merged = mergeHistory({
+    jobs: [{ job_id: "a", job_url: "u", company_name: "已知公司", salary_range: "30-40K", product_direction_tags: ["用户增长"], field_evidence: { company_name: "来源A" }, first_seen_at: "t1", last_seen_at: "t1", seen_count: 1 }],
+    discovery_pages: []
+  }, {
+    jobs: [{ job_id: "a", job_url: "u", company_name: "unknown", salary_range: "unknown", product_direction_tags: ["AI应用"], field_evidence: { salary_range: "来源B" }, first_seen_at: "t2", last_seen_at: "t2", seen_count: 1 }],
+    discovery_pages: []
+  });
+  assert.equal(merged.jobs[0].company_name, "已知公司");
+  assert.equal(merged.jobs[0].salary_range, "30-40K");
+  assert.deepEqual(merged.jobs[0].product_direction_tags, ["用户增长", "AI应用"]);
+  assert.deepEqual(merged.jobs[0].field_evidence, { company_name: "来源A", salary_range: "来源B" });
 });
 
 test("builds a bounded query matrix", () => {
