@@ -60,7 +60,11 @@ export function parseCodexExecOutput(output) {
 
 export function runCodexSearch(prompt, options = {}, dependencies = {}) {
   const command = dependencies.command ?? options.codexCommand ?? "codex";
-  const args = dependencies.args ?? ["--search", "exec", "--ephemeral", "--json", prompt];
+  const args = dependencies.args ?? [
+    "--search", "exec",
+    ...(options.ignoreUserConfig ? ["--ignore-user-config"] : []),
+    "--ephemeral", "--json", prompt,
+  ];
   const spawnProcess = dependencies.spawn ?? spawn;
   return new Promise((resolve, reject) => {
     const child = spawnProcess(command, args, {

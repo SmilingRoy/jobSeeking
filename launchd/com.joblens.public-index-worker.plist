@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.joblens.public-index-worker</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/SmilingRoy/.local/bin/node</string>
+    <string>/Users/SmilingRoy/.codex/worktrees/ae27/jobSeeking/scripts/run-public-index-worker.mjs</string>
+    <string>--target</string>
+    <string>1000</string>
+    <string>--interval-ms</string>
+    <string>60000</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/Users/SmilingRoy/.codex/worktrees/ae27/jobSeeking</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/Users/SmilingRoy/.local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>CODEX_HOME</key>
+    <string>/Users/SmilingRoy/.codex</string>
+  </dict>
+  <key>StandardOutPath</key>
+  <string>/Users/SmilingRoy/.codex/worktrees/ae27/jobSeeking/outputs/worker.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/SmilingRoy/.codex/worktrees/ae27/jobSeeking/outputs/worker.log</string>
+  <key>ProcessType</key>
+  <string>Background</string>
+  <key>KeepAlive</key>
+  <true/>
+  <key>LowPriorityIO</key>
+  <true/>
+  <key>ThrottleInterval</key>
+  <integer>60</integer>
+</dict>
+</plist>

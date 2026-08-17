@@ -8,6 +8,7 @@ import { normalizeJobTitle, processSearchBatches } from "../scripts/lib/job-inde
 import { buildSitePayload, displayIndexSummary } from "../scripts/index-to-site-jobs.mjs";
 import { collectPlan } from "../scripts/lib/resumable-collector.mjs";
 import { collectCodexLive, codexPrompt, parseCodexExecOutput } from "../scripts/lib/codex-search.mjs";
+import { parseWorkerArgs } from "../scripts/run-public-index-worker.mjs";
 
 test("defaults to Codex input and keeps Brave as an explicit fallback", () => {
   assert.equal(parseArgs([]).provider, "codex");
@@ -16,6 +17,12 @@ test("defaults to Codex input and keeps Brave as an explicit fallback", () => {
   assert.equal(parseArgs(["--provider", "fixture"]).provider, "fixture");
   assert.equal(parseArgs(["--auto-loop", "--max-rounds", "4"]).autoLoop, true);
   assert.equal(parseArgs(["--auto-loop", "--max-rounds", "4"]).maxRounds, 4);
+});
+
+test("supports the ChatGPT-compatible Codex CLI override", () => {
+  assert.equal(parseArgs(["--ignore-user-config"]).ignoreUserConfig, true);
+  assert.equal(parseWorkerArgs(["--target", "1000", "--interval-ms", "60000"]).target, 1000);
+  assert.throws(() => parseWorkerArgs(["--interval-ms", "1000"]), /不得小于 60000/);
 });
 
 test("parses Codex exec JSONL final messages", () => {

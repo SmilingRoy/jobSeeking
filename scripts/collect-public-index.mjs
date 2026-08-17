@@ -33,6 +33,7 @@ export function parseArgs(argv) {
     autoLoop: false,
     maxRounds: 10,
     codexCommand: "codex",
+    ignoreUserConfig: false,
     output: ""
   };
   for (let index = 0; index < argv.length; index += 1) {
@@ -55,6 +56,7 @@ export function parseArgs(argv) {
     else if (token === "--auto-loop") options.autoLoop = true;
     else if (token === "--max-rounds") options.maxRounds = Number(argv[++index]);
     else if (token === "--codex-command") options.codexCommand = argv[++index];
+    else if (token === "--ignore-user-config") options.ignoreUserConfig = true;
     else if (token === "--output") options.output = argv[++index];
     else throw new Error(`未知参数：${token}`);
   }
@@ -89,6 +91,7 @@ function help() {
   --auto-loop         Codex provider 在 Node 进程内自动调用并循环到无新增岗位
   --max-rounds N      自动循环最多轮数，默认 10
   --codex-command CMD Codex CLI 可执行文件，默认 codex
+  --ignore-user-config 运行 Codex CLI 时忽略旧的用户/项目配置，使用 ChatGPT 登录的默认 Codex 模型
   --checkpoint PATH   逐页断点文件
   --resume            从同配置的未完成断点继续
   --history PATH      跨轮次合并去重文件
