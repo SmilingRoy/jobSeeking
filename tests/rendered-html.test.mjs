@@ -19,6 +19,8 @@ test("server renders the Job Lens dashboard with the imported dataset", async ()
   assert.match(html, /职位雷达/);
   assert.match(html, /上海[\s\S]*322[\s\S]*个岗位/);
   assert.match(html, /筛选岗位/);
+  assert.match(html, /公司融资阶段/);
+  assert.match(html, /融资：/);
   assert.match(html, /信息不足/);
   assert.doesNotMatch(html, /没有符合条件的岗位/);
   assert.doesNotMatch(html, /Your site is taking shape|codex-preview|SkeletonPreview/);

@@ -12,6 +12,7 @@ type Filters = {
   search: string;
   recommendation: "全部结论" | Recommendation;
   direction: string;
+  financingStage: string;
   minimumScore: number;
   userStatus: "全部状态" | UserStatus;
   verification: "全部验证状态" | string;
@@ -20,7 +21,8 @@ type Filters = {
 const bundledPayload = jobsPayload as { metadata?: Record<string, unknown>; jobs: Array<Record<string, unknown>> };
 const bundledJobs = bundledPayload.jobs.map(normalizeJob) as Job[];
 const recommendationOrder: Recommendation[] = ["优先推荐", "可以考虑", "谨慎评估", "信息不足", "不推荐"];
-const defaultFilters: Filters = { search: "", recommendation: "全部结论", direction: "全部方向", minimumScore: 0, userStatus: "全部状态", verification: "全部验证状态" };
+const financingStageOrder = ["未融资", "天使轮", "A轮", "B轮", "C轮", "D轮及以上", "不需要融资", "已上市", "unknown"];
+const defaultFilters: Filters = { search: "", recommendation: "全部结论", direction: "全部方向", financingStage: "全部融资阶段", minimumScore: 0, userStatus: "全部状态", verification: "全部验证状态" };
 
 function labelVerification(status: string) {
   return { captured_jd: "完整 JD", needs_review: "待复核", unverified_index_snapshot: "公开索引待验证" }[status] ?? status;
@@ -64,6 +66,10 @@ export default function Home() {
   };
 
   const directions = useMemo(() => ["全部方向", ...Array.from(new Set(jobs.flatMap((job) => job.directions))).filter(Boolean).sort()], [jobs]);
+  const financingStages = useMemo(() => {
+    const observed = new Set(jobs.map((job) => job.financing_stage));
+    return ["全部融资阶段", ...financingStageOrder.filter((stage) => observed.has(stage)), ...Array.from(observed).filter((stage) => !financingStageOrder.includes(stage)).sort()];
+  }, [jobs]);
   const filteredJobs = useMemo(() => {
     const query = filters.search.trim().toLowerCase();
     return jobs.filter((job) => {
@@ -71,6 +77,7 @@ export default function Home() {
       return (!query || `${job.title} ${job.company} ${job.description}`.toLowerCase().includes(query))
         && (filters.recommendation === "全部结论" || job.recommendation === filters.recommendation)
         && (filters.direction === "全部方向" || job.directions.includes(filters.direction))
+        && (filters.financingStage === "全部融资阶段" || job.financing_stage === filters.financingStage)
         && (filters.minimumScore === 0 || (job.score ?? -1) >= filters.minimumScore)
         && (filters.userStatus === "全部状态" || status === filters.userStatus)
         && (filters.verification === "全部验证状态" || job.verification_status === filters.verification);
@@ -105,6 +112,7 @@ export default function Home() {
         <label className="field"><span>个人状态</span><select value={filters.userStatus} onChange={(event) => updateFilter("userStatus", event.target.value as Filters["userStatus"])}><option>全部状态</option>{USER_STATUSES.map((status) => <option key={status}>{status}</option>)}</select></label>
         <label className="field"><span>验证状态</span><select value={filters.verification} onChange={(event) => updateFilter("verification", event.target.value)}><option>全部验证状态</option><option value="captured_jd">完整 JD</option><option value="needs_review">待复核</option><option value="unverified_index_snapshot">公开索引待验证</option></select></label>
         <label className="field"><span>产品方向</span><select value={filters.direction} onChange={(event) => updateFilter("direction", event.target.value)}>{directions.map((direction) => <option key={direction}>{direction}</option>)}</select></label>
+        <label className="field"><span>公司融资阶段</span><select value={filters.financingStage} onChange={(event) => updateFilter("financingStage", event.target.value)}>{financingStages.map((stage) => <option key={stage} value={stage}>{stage === "unknown" ? "未知" : stage}</option>)}</select></label>
         <label className="field"><span>最低匹配分：{filters.minimumScore || "不限"}</span><input type="range" min="0" max="100" step="5" value={filters.minimumScore} onChange={(event) => updateFilter("minimumScore", Number(event.target.value))} /></label>
         <button className="reset-button" onClick={() => setFilters(defaultFilters)}>清除筛选</button>
       </aside>
@@ -112,7 +120,7 @@ export default function Home() {
         {filteredJobs.map((job) => { const status = statusFor(job.id); return <article className={`job-card ${status !== "未查看" ? "is-viewed" : ""}`} key={job.id}>
           <div className="job-card-head"><div><div className="job-title-line"><h3>{job.title}</h3><span className={`recommendation recommendation-${job.recommendation}`}>{job.recommendation}</span><span className={`verification verification-${job.verification_status}`}>{labelVerification(job.verification_status)}</span></div><p className="company-line">{job.company}</p></div><div className="score">{job.score === null ? "—" : job.score}<small>分</small></div></div>
           <div className="confidence-row"><span>证据置信度</span><strong>{job.evidence_confidence === null ? "未计算" : `${Math.round(job.evidence_confidence * 100)}%`}</strong><span className="user-status">{status}</span></div>
-          <div className="job-meta"><span>{job.city}{job.district !== "unknown" ? ` · ${job.district}` : ""}</span><span>{job.salary}</span><span>{job.workExperience}</span></div>
+          <div className="job-meta"><span>{job.city}{job.district !== "unknown" ? ` · ${job.district}` : ""}</span><span>{job.salary}</span><span>{job.workExperience}</span><span>融资：{job.financing_stage === "unknown" ? "未知" : job.financing_stage}</span></div>
           <div className="tag-row">{(job.directions.length ? job.directions : ["方向待补充"]).map((tag: string) => <span className="tag" key={tag}>{tag}</span>)}</div><p className="job-summary">{job.description}</p>
           <div className="card-actions"><select aria-label={`${job.title} 个人状态`} value={status} onChange={(event) => setStatus(job.id, event.target.value as UserStatus)}>{USER_STATUSES.map((option) => <option key={option}>{option}</option>)}</select><button className="button button-ghost" onClick={() => openJob(job)}>查看详情</button><a className="button button-primary" href={job.url} target="_blank" rel="noreferrer" onClick={() => status === "未查看" && setStatus(job.id, "已查看")}>前往 BOSS ↗</a></div>
         </article>; })}
