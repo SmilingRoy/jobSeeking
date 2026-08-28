@@ -1,0 +1,19 @@
+{
+  "created_at": "2026-08-04T12:00:00+08:00",
+  "jobs": [
+    {
+      "sequence": 1,
+      "canonical_key": "fixture-good",
+      "url": "https://www.zhipin.com/job_detail/fixture-good.html",
+      "status": "captured",
+      "captured_at": "2026-08-04T12:00:00+08:00"
+    },
+    {
+      "sequence": 2,
+      "canonical_key": "fixture-review",
+      "url": "https://www.zhipin.com/job_detail/fixture-review.html",
+      "status": "detail_unchanged",
+      "captured_at": "2026-08-04T12:01:00+08:00"
+    }
+  ]
+}

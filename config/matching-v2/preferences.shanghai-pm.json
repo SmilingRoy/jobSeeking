@@ -1,0 +1,25 @@
+{
+  "version": "shanghai-pm-preferences-v1.0.0",
+  "scope": {"city": "上海", "title_contains": "产品经理"},
+  "weights": {
+    "title_fit": 4,
+    "city_fit": 4,
+    "direction_fit": 14,
+    "product_form_fit": 9,
+    "product_layer_fit": 9,
+    "financing_fit": 3,
+    "responsibility_fit": 20,
+    "role_fit": 7,
+    "experience_fit": 6,
+    "company_quality": 6,
+    "freshness_fit": 3,
+    "mandatory_requirement_fit": 3,
+    "team_quality": 4,
+    "work_mode_fit": 3,
+    "growth_value": 4,
+    "risk_fit": 1
+  },
+  "priority_directions": ["用户产品", "用户增长", "本地生活", "LBS", "出行", "交易", "履约"],
+  "adjacent_directions": ["AI应用", "电商平台", "C端策略平台", "海外C端"],
+  "excluded_directions": ["商业化广告", "支付金融", "企业SaaS", "数据平台", "政务信息化", "硬件工业"]
+}
