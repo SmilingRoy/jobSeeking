@@ -69,7 +69,11 @@ export function runCodexSearch(prompt, options = {}, dependencies = {}) {
   return new Promise((resolve, reject) => {
     const child = spawnProcess(command, args, {
       cwd: options.cwd,
-      env: { ...process.env, ...(options.env ?? {}) },
+      env: {
+        ...process.env,
+        ...(options.codexHome ? { CODEX_HOME: options.codexHome } : {}),
+        ...(options.env ?? {}),
+      },
       stdio: ["ignore", "pipe", "pipe"],
     });
     let stdout = "";

@@ -20,6 +20,7 @@ export function parseWorkerArgs(argv = process.argv.slice(2)) {
     lock: "outputs/worker.lock",
     log: "outputs/worker.log",
     codexCommand: "codex",
+    codexHome: "",
   };
   for (let i = 0; i < argv.length; i += 1) {
     const token = argv[i];
@@ -34,6 +35,7 @@ export function parseWorkerArgs(argv = process.argv.slice(2)) {
     else if (token === "--lock") options.lock = argv[++i];
     else if (token === "--log") options.log = argv[++i];
     else if (token === "--codex-command") options.codexCommand = argv[++i];
+    else if (token === "--codex-home") options.codexHome = argv[++i];
     else if (token === "--help" || token === "-h") options.help = true;
     else throw new Error(`未知参数：${token}`);
   }
@@ -101,6 +103,7 @@ function runBatch(options) {
     "--auto-loop",
     "--max-rounds", String(options.maxRounds),
     "--ignore-user-config",
+    ...(options.codexHome ? ["--codex-home", options.codexHome] : []),
     "--resume",
     "--history", options.history,
     "--checkpoint", options.checkpoint,

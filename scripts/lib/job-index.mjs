@@ -214,6 +214,12 @@ export function normalizeIndexedResult(result, context) {
     value: {
       job_id: urlInfo.jobId,
       job_url: urlInfo.canonicalUrl,
+      // Keep the URL that produced the record separate from the canonical
+      // detail URL.  Public-index results frequently come from a listing
+      // snapshot; downstream integration needs that provenance even when a
+      // detail page was not opened.
+      source_url: normalizeText(result.source_url ?? result.evidence_source ?? result.url) || urlInfo.canonicalUrl,
+      evidence_source: normalizeText(result.evidence_source ?? result.source_url ?? result.url) || urlInfo.canonicalUrl,
       collected_at: context.collectedAt,
       first_seen_at: context.collectedAt,
       last_seen_at: context.collectedAt,

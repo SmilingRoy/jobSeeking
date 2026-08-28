@@ -42,3 +42,9 @@ next-env.d.ts
 /outputs/
 /work/
 /handoff/
+
+# local Codex/runtime artifacts
+/.codex/
+/.pnpm-store/
+__pycache__/
+*.pyc
