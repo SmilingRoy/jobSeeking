@@ -2,6 +2,10 @@
 
 上海产品经理岗位筛选工作台，以及一套可分批运行、跨轮次去重的公开索引采集器。
 
+## 在线网站
+
+公开访问地址：[job-lens-radar.smilingroy.chatgpt.site](https://job-lens-radar.smilingroy.chatgpt.site)
+
 ## 批量发现岗位
 
 采集分成两层：
