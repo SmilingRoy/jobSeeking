@@ -1,135 +1,97 @@
 # Job Lens / 职位雷达
 
-上海产品经理岗位筛选工作台，以及一套可分批运行、跨轮次去重的公开索引采集器。
+面向上海产品经理岗位的 OCR 采集、JD 结构化、岗位匹配和投递决策工作台。
 
 ## 在线网站
 
 公开访问地址：[job-lens-radar.smilingroy.chatgpt.site](https://job-lens-radar.smilingroy.chatgpt.site)
 
-## 批量发现岗位
+项目仓库：[github.com/SmilingRoy/jobSeeking](https://github.com/SmilingRoy/jobSeeking)
 
-采集分成两层：
+网站当前只展示已识别到完整 JD 的岗位。岗位卡片保留标题、公司、薪资、经验、地区、匹配分、推荐结论、岗位职责、任职要求和 BOSS 投递链接。
 
-1. 由 Codex 内置网页检索发现被公开索引的 BOSS 具体岗位链接和招聘列表页，并导入检索结果信封。
-2. 只把索引文本明确包含“上海”和“产品经理”的具体链接写入候选池；岗位状态、完整 JD 和公司信息保持 `unknown`，等待正常登录态复核。
+## 当前主流程
 
-采集器不会直接批量请求 BOSS，不会绕过登录、安全页或验证码，也不会使用 Cookie 外传、代理池或模拟真人行为。Brave Search API 保留为显式备用 provider。
+项目以 BOSS 直聘列表页 OCR 采集为主，不把搜索 API 作为主数据来源。
 
-### Codex 检索导入
-
-Codex 网页检索不是 Node 进程内可直接调用的项目 API。先由 Codex 检索，再将结果整理为以下信封格式保存到 `outputs/inbox/codex-search.json`：
-
-```json
-{
-  "note": "Codex 内置网页检索结果；尚未验证岗位仍开放",
-  "queries": [
-    {
-      "query": "site:zhipin.com/job_detail/ 上海 产品经理",
-      "mode": "exact",
-      "results": [
-        {
-          "title": "产品经理 20-30K",
-          "url": "https://www.zhipin.com/job_detail/example.html",
-          "description": "上海 产品经理"
-        }
-      ]
-    }
-  ]
-}
+```text
+已登录的 BOSS 列表页
+  → 点击左侧岗位卡片
+  → 等待右侧 JD 面板更新
+  → 只滚动右侧 JD 面板并截图
+  → Vision OCR
+  → 卡片信息与 JD 信息 mapping
+  → OCR 清洗和自然语言结构化
+  → matching-v2 评分
+  → 按岗位 URL 去重合并
+  → 写入 data/jobs.json
+  → 网站展示
 ```
 
-然后运行：
+采集器不跳转岗位详情页，减少频繁导航触发风控的概率；不读取或上传 Cookie、密码等登录凭据。单个岗位失败不会阻断整批任务。
+
+## 开发环境
+
+- macOS
+- Node.js `>=22.13.0`
+- pnpm
+- Python 3
+- 完整 Xcode（`scripts/ocr-vision.swift` 使用 macOS Vision framework）
+- Chrome，已登录 BOSS 直聘
+
+安装依赖：
 
 ```bash
-pnpm run collect:index -- --provider codex --input outputs/inbox/codex-search.json
+pnpm install
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install Pillow
 ```
 
-### Node 内自动调用 Codex 并循环检索
+项目不依赖 Brave Search 才能运行；搜索 API 相关脚本仅作为备用能力保留。
 
-本机已登录 Codex CLI 时，可以让 Node 进程直接启动 `codex --search exec`，由 Codex 返回机器可读的检索信封。每轮会把已见的详情链接放入下一轮提示，整轮没有新增岗位时停止：
+## OCR 采集
 
-```bash
-pnpm run collect:index -- \
-  --provider codex \
-  --auto-loop \
-  --max-rounds 10 \
-  --history outputs/boss-index-history.json
+目标页面：
+
+```text
+https://www.zhipin.com/web/geek/jobs
 ```
 
-`--auto-loop` 需要本机 Codex CLI 可执行、已完成登录且允许写入 Codex 状态目录；可用 `--codex-command` 指定 CLI 路径。若 CLI 不可用，继续使用上面的 `--input` 信封模式。自动循环最多运行 `--max-rounds` 轮，并在一轮没有新 `job_detail` 链接时结束；结果仍经过上海、产品经理、具体详情链接和历史去重校验。
-
-采集阶段只做范围校验：公开证据能确认上海、标题包含“产品经理”即可进入候选，不在采集阶段按用户偏好筛掉增长、AI、电商、内容、推荐、商业化或其他方向。Codex 会尽可能返回公司、薪资、经验、学历、行业、规模、融资、职责、任职要求、产品形态/层级、角色、团队、工作方式、招聘活跃度等字段；不能确认的字段填 `unknown`，并可在 `field_evidence` 和 `information_confidence` 中保留来源与置信度。方向筛选和评分留给下游。
-
-默认查询矩阵包含泛岗位、C 端、用户体验、内容、搜索、推荐、商业化、会员、海外、平台、增长、交易、履约、本地生活、LBS、出行、策略、AI 和电商等关键词，并可结合 `--district-shards` 扩展到上海各区。历史合并遵循已知字段不被后续 `unknown` 覆盖的单调证据规则。
-
-Codex 检索结果仍然是公开索引候选；列表页只能作为 discovery evidence，不能代替具体 `job_detail` 链接或完整 JD。
-
-### 先离线试跑
-
-```bash
-pnpm run collect:index -- --provider fixture
-pnpm run test:collector
-```
-
-### Brave 备用批量采集
-
-在本机终端临时设置 Brave Search API 密钥后运行：
-
-```bash
-export BRAVE_SEARCH_API_KEY="你的密钥"
-pnpm run collect:index -- --provider brave --pages 3
-```
-
-默认配置包含 16 个产品方向和两类检索式，共 32 个检索式。每个检索式默认抓 3 页、每页最多 20 条，单轮最多发现 1,920 条原始索引结果；会按 BOSS 岗位 ID 和规范化 URL 去重。Brave 单个检索式最多支持 10 页，可用 `--pages 10` 扩大到单轮最多 6,400 条原始索引结果。
-
-需要更大规模时，可开启上海全市 + 16 个行政区分片。建议同时用 `--modes exact`，只寻找具体岗位页：默认 3 页时理论上限 16,320 条原始索引结果，10 页时为 54,400 条；实际数量通常更少，并会有大量跨关键词、跨行政区重复，历史文件会自动合并。
-
-适合分批、重复运行的参数：
-
-```bash
-# 只跑前 8 个检索式
-pnpm run collect:index -- --provider brave --pages 5 --query-limit 8
-
-# 只找具体岗位页，不收列表页
-pnpm run collect:index -- --provider brave --pages 5 --modes exact
-
-# 单独扩充一个方向
-pnpm run collect:index -- --provider brave --pages 10 --modes exact --term 交易产品经理
-
-# 大批量：按上海 16 个行政区分片；先用 query-limit 控制首批成本
-pnpm run collect:index -- --provider brave --pages 3 --modes exact --district-shards --query-limit 40
-```
-
-结果写到 `outputs/runs/`，跨轮累计结果写到 `outputs/boss-index-history.json`，最新摘要写到 `outputs/latest-index-report.md`。`outputs/` 默认不进入 Git，避免把个人求职数据发布到网站代码中。
-
-网站右上角的“导入采集结果”可以直接选择本轮 JSON 或历史合并 JSON。导入时只接受索引证据明确为上海、标题包含产品经理且 URL 为具体 `job_detail` 的记录，并按规范化链接合并。所有公开索引记录默认显示“待验证”；列表每次最多渲染 80 条，可继续分批加载。
-
-## 网站开发
-
-### 截图 OCR 与岗位评估
-
-项目现在以 Chrome OCR 采集为主。先在 Chrome 加载 `capture-extension/` 未打包扩展，
-打开已登录的 BOSS 搜索结果页，再启动本地采集桥接。采集器只点击左侧岗位卡片，
-等待右侧分栏 JD 更新并截图，不跳转到详情 URL，以降低频繁导航触发风控的概率：
+1. 在 Chrome 加载 `capture-extension/` 未打包扩展。
+2. 打开已登录的 BOSS 岗位列表页。
+3. 启动本地 OCR Bridge：
 
 ```bash
 pnpm run ocr:capture
 ```
 
-在扩展弹窗中设置采集数量并点击“开始采集”。扩展只操作当前页面和岗位截图，
-不会读取 Cookie 或密码；截图和 manifest 会保存到 `outputs/ocr-runs/<run-id>/`。
-
-也可以通过本地控制命令自动触发采集：
+4. 在扩展弹窗中设置采集数量并开始采集，或者使用本地控制命令：
 
 ```bash
-pnpm run ocr:start -- --limit 30  # 采集 30 个后自动停止
+pnpm run ocr:start -- --limit 30  # 采集 30 个岗位后停止
 pnpm run ocr:start                # 持续采集，直到发送停止命令
 pnpm run ocr:stop
 pnpm run ocr:status
 ```
 
-扩展会定时领取控制命令，因此开始命令最多约 30 秒后生效；采集过程中可随时发送停止命令。
-当前活动标签页必须是已登录的 BOSS 页面。
+控制命令由扩展定时领取，最多约 30 秒生效。长批量采集支持失败重试、页面去重、断点恢复和阶段性冷却；Chrome 需要保持运行，当前标签页需要保持在 BOSS 岗位列表。
+
+每次采集生成独立批次：
+
+```text
+outputs/ocr-runs/<run-id>/
+  manifest.json
+  screenshots/
+  ocr/
+  jobs-structured.json
+  jobs-scored.json
+  review-queue.json
+  report.md
+```
+
+## OCR 处理与评分
 
 批次完成后运行：
 
@@ -137,148 +99,98 @@ pnpm run ocr:status
 pnpm run ocr:process -- --run outputs/ocr-runs/<run-id>
 ```
 
-处理链路为：Vision OCR、图片规范化、字段结构化、项目内 matching-v2 评分、
-待复核队列、按岗位 URL 去重合并。单个岗位失败不会中断整个批次。
+处理步骤包括：
 
-也可以对已有截图批次直接运行 OCR：
+- 图片规范化和 Vision OCR
+- OCR 文本去噪、重复页合并和低质量文本识别
+- 从左侧岗位卡片 mapping 标题、公司、薪资、经验、学历、地区和链接
+- 从右侧 JD mapping 岗位职责和任职要求
+- matching-v2 评分和推荐结论
+- 按规范化 BOSS URL 去重
+- 生成网站使用的数据和报告
+
+也可以直接处理已有 manifest：
 
 ```bash
-python3 scripts/ocr-and-score.py \\
-  --manifest /path/to/manifest.json \\
-  --ocr-dir /path/to/card-ocr \\
+python3 scripts/ocr-and-score.py \
+  --manifest /path/to/manifest.json \
+  --ocr-dir /path/to/card-ocr \
   --detail-ocr-dir /path/to/detail-ocr
 ```
 
-输出 `data/jobs-structured.json`（schema 原始层）、`data/jobs-scored.json`（评分层）
-和网站使用的 `data/jobs.json`。只有完整 JD 和职责字段满足质量门槛的岗位，才会进入
-“推荐投递/可以考虑”；其余统一保留为“信息不足”，不根据缺失内容猜测。
+主要输出：
 
-Vision OCR 输出包含识别文本、置信度和归一化 bounding box；旧的纯文本 OCR 文件仍可兼容读取。
+- `data/jobs-structured.json`：结构化原始层
+- `data/jobs-scored.json`：评分层
+- `data/jobs.json`：网站展示层
 
-### 统一岗位合同
+Vision OCR 结果包含文本、置信度和归一化坐标；项目仍兼容旧版纯文本 OCR 文件。
 
-`scripts/lib/site-job-contract.mjs` 是 public-index、OCR 和网站数据的唯一合同入口。
-转换和合并会统一薪资、经验、学历、区域、公司信息、职责/要求、标签、证据与评分字段；
-未知值使用 `unknown`，证据始终是对象数组。公开索引记录固定为
-`pipeline: public_index` + `verification_status: unverified_index_snapshot`，其
-`score` 与 `match_score` 必须为 `null`。完整 OCR JD 才能升级为 `captured_jd`，
-冲突或不完整记录进入 `needs_review`。
+## 信息完整性规则
 
-合并后的数据可以用以下命令校验：
+岗位只有在完整 JD 和职责内容满足质量门槛时，才会进入网站岗位池。公司规模、融资阶段、公司质量、团队质量、岗位新鲜度和融资匹配度是辅助分析维度，不会单独触发“信息不足”。
+
+岗位唯一主键是规范化 BOSS 岗位链接。未知字段使用 `unknown`，不会用缺失内容猜测岗位信息。用户查看状态独立保存，不会被新一轮采集覆盖。
+
+统一岗位合同入口：
+
+```text
+scripts/lib/site-job-contract.mjs
+```
+
+校验网站数据：
 
 ```bash
 node scripts/validate-site-jobs.mjs data/jobs.json
 ```
 
-A clean full-stack starter running on
-[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
-Drizzle support.
-
-## Prerequisites
-
-- Node.js `>=22.13.0`
-
-## Quick Start
+## 网站开发
 
 ```bash
-npm install
-npm run dev
-npm run build
+pnpm run dev
+pnpm run build
+pnpm run start
 ```
 
-This starter does not use `wrangler.jsonc`.
+网站基于 Vinext、React 和 Cloudflare Workers 兼容运行时构建。Sites 配置位于 `.openai/hosting.json`，当前不使用 D1 或 R2。
 
-## Included Shape
+## 测试
 
-- edit site code under `app/`
-- `.openai/hosting.json` declares optional Sites D1 and R2 bindings
-- `vite.config.ts` simulates declared bindings for local development
-- `db/schema.ts` starts intentionally empty
-- `examples/d1/` contains an optional D1 example surface
-- `drizzle.config.ts` supports local migration generation when needed
+运行页面和核心数据测试：
 
-## Workspace Auth Headers
-
-OpenAI workspace sites can read the current user's email from
-`oai-authenticated-user-email`.
-
-SIWC-authenticated workspace sites may also receive
-`oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty
-`name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by
-`oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
-
-Treat the full name as optional and fall back to email when it is absent:
-
-```tsx
-import { headers } from "next/headers";
-
-export default async function Home() {
-  const requestHeaders = await headers();
-  const email = requestHeaders.get("oai-authenticated-user-email");
-  const encodedFullName = requestHeaders.get("oai-authenticated-user-full-name");
-  const fullName =
-    encodedFullName &&
-    requestHeaders.get("oai-authenticated-user-full-name-encoding") ===
-      "percent-encoded-utf-8"
-      ? decodeURIComponent(encodedFullName)
-      : null;
-
-  const displayName = fullName ?? email;
-  // ...
-}
+```bash
+node --test tests/rendered-html.test.mjs tests/job-workbench.test.mjs
 ```
 
-## Optional Dispatch-Owned ChatGPT Sign-In
+运行 OCR 采集测试：
 
-Import the ready-to-use helpers from `app/chatgpt-auth.ts` when the site needs
-optional or required ChatGPT sign-in:
+```bash
+node --test tests/ocr-capture.test.mjs
+```
 
-- Use `getChatGPTUser()` for optional signed-in UI.
-- Use `requireChatGPTUser(returnTo)` for server-rendered pages that should send
-  anonymous visitors through Sign in with ChatGPT.
-- Use `chatGPTSignInPath(returnTo)` and `chatGPTSignOutPath(returnTo)` for
-  browser links or actions.
-- Pass a same-origin relative `returnTo` path for the destination after sign-in
-  or sign-out. The helper validates and safely encodes it.
-- Mark protected pages with `export const dynamic = "force-dynamic"` because
-  they depend on per-request identity headers.
+运行 Python OCR 和 matching 测试：
 
-Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the
-OAuth cookies, and identity header injection. Do not implement app routes for
-those reserved paths. Routes that do not import and call the helper remain
-anonymous-compatible.
+```bash
+PYTHONPATH=. python3 tests/test_ocr_pipeline.py
+PYTHONPATH=. python3 tests/test_matching_v2.py
+```
 
-SIWC establishes identity only; it does not prove workspace membership. Use the
-Sites hosting platform's access policy controls for workspace-wide restrictions,
-or enforce explicit server-side membership or allowlist checks.
+编译 Vision OCR：
 
-Use SIWC for account pages, user-specific dashboards, saved records, and write
-actions tied to the current ChatGPT user. Leave public content anonymous.
+```bash
+swiftc scripts/ocr-vision.swift -o /tmp/ocr-vision
+```
 
-## Useful Commands
+## 目录说明
 
-- `npm run dev`: start local development
-- `npm run build`: verify the vinext build output
-- `npm test`: build the starter and verify its rendered loading skeleton
-- `npm run db:generate`: generate Drizzle migrations after schema changes
+```text
+app/                    网站页面和工作台逻辑
+capture-extension/      Chrome OCR 采集扩展
+data/                   当前岗位结构化、评分和网站展示数据
+scripts/                OCR、采集、mapping、评分和合并脚本
+tests/                  JavaScript 和 Python 测试
+outputs/                本地采集批次，默认不纳入 Git
+.openai/hosting.json    GPT Sites 托管配置
+```
 
-## Learn More
-
-- [vinext Documentation](https://github.com/cloudflare/vinext)
-- [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
-## 项目架构
-
-项目按“采集证据 → 统一整合 → 决策工作台 → 可选升级 → 站点发布”分层：
-
-- **Web 应用层（app/）**：Next/vinext 页面、岗位列表、筛选器、详情抽屉和 Workbench 本地决策状态。
-- **采集层（scripts/collect-public-index.mjs）**：调用 Codex CLI 的公开检索，接收手动检索信封或 fixture；不访问 BOSS 私有接口。
-- **运行编排（scripts/run-job-lens-round.mjs）**：单轮锁、断点、状态心跳、连续无新增检测和原子写回。
-- **索引与整合层（scripts/lib/、scripts/merge-job-pipelines.mjs）**：规范化 job_detail URL，按稳定岗位 ID 去重，保留 evidence_source，并执行 unknown 不覆盖已知的合并规则。
-- **合同与校验层（scripts/lib/site-job-contract.mjs、scripts/validate-site-jobs.mjs）**：统一采集、OCR 和站点字段；公开索引固定为 unverified_index_snapshot，评分为 null。
-- **OCR/评分层（scripts/ocr-*.py、scripts/run-ocr-pipeline.py）**：对用户提供的截图或文本做 OCR、字段结构化和匹配评分；完整证据才能升级岗位状态。
-- **数据层（data/、outputs/）**：data/ 保存本地站点数据，outputs/ 保存采集历史、断点和 worker 状态；这些运行时数据不进入公开代码快照。
-- **质量与发布层（tests/、pnpm validate:data、pnpm build、Sites）**：先校验和构建，成功后才发布；部署失败保留旧站点版本。
-
-数据流可以概括为：
-
-公开索引/用户截图 → 证据保留 → 统一岗位合同 → Workbench 决策 →（可选 OCR/评分升级）→ 校验构建 → 私有 Sites
+更多变更记录见 [CHANGELOG.md](CHANGELOG.md)。
