@@ -14,10 +14,16 @@ export const VERIFICATION_STATUSES = Object.freeze([
   "captured_jd",
   "needs_review",
 ]);
+export const COMPLETE_OCR_CAPTURE_STATUSES = Object.freeze([
+  "captured",
+  "detail_captured",
+  "list_detail_captured",
+]);
 
 export const CONTRACT_SCALAR_FIELDS = Object.freeze([
   "id", "url", "title", "company", "city", "district", "office_location", "salary",
   "workExperience", "education", "company_size", "financing_stage", "industry",
+  "recruiter_type",
   "description", "job_description_raw", "responsibilities", "requirements", "pipeline",
   "verification_status", "capture_status", "scoring_config_version",
 ]);
@@ -81,6 +87,7 @@ export function normalizeSiteJobRecord(record, pipelineHint = "public_index") {
     company_size: scalar(record.company_size),
     financing_stage: scalar(record.financing_stage),
     industry: scalar(record.industry),
+    recruiter_type: scalar(record.recruiter_type),
     description: scalar(record.description ?? record.job_description_raw),
     job_description_raw: scalar(record.job_description_raw ?? record.description),
     responsibilities: scalar(record.responsibilities ?? record.responsibility_summary),
@@ -204,7 +211,7 @@ export function siteJobErrors(jobs) {
     }
     if (job.verification_status === "captured_jd") {
       const hasOcrEvidence = job.evidence_source.some((entry) => entry?.type === "ocr_jd");
-      if (!hasOcrEvidence || job.capture_status !== "captured") {
+      if (!hasOcrEvidence || !COMPLETE_OCR_CAPTURE_STATUSES.includes(job.capture_status)) {
         errors.push(`${label} captured_jd 缺少完成态 OCR 证据`);
       }
     }

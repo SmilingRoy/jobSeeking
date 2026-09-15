@@ -130,7 +130,8 @@ export function scoreJob(job, config = scoringConfig) {
     });
   }
 
-  const completeJd = !isUnknown(job.job_description_raw) && !isUnknown(job.responsibilities);
+  const responsibilityText = job.responsibilities ?? job.responsibility_summary;
+  const completeJd = !isUnknown(job.job_description_raw) && !isUnknown(responsibilityText);
   const captureFactor = job.verification_status === "captured_jd" && completeJd ? 1 : 0.55;
   const evidenceConfidence = Number(((knownWeight / totalWeight) * captureFactor).toFixed(3));
   const matchScore = knownWeight ? Number(((earnedPoints / knownWeight) * 100).toFixed(1)) : null;
@@ -156,7 +157,8 @@ export function scoreJob(job, config = scoringConfig) {
     scoring_config_version: config.version,
     recommendation,
     missing_information: unique([
-      ...(Array.isArray(job.missing_information) ? job.missing_information : []),
+      ...(Array.isArray(job.missing_information) ? job.missing_information : [])
+        .filter((item) => item !== "完整JD或职责证据" || !completeJd),
       ...components.filter((component) => !component.known).map((component) => component.dimension),
       ...(!completeJd ? ["完整JD或职责证据"] : []),
     ]),

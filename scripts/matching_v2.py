@@ -8,6 +8,14 @@ from typing import Any
 
 UNKNOWN = "unknown"
 HIGH_RECOMMENDATIONS = {"优先推荐", "可以考虑"}
+# These are useful enrichment fields, but they are not required to decide
+# whether the job itself has enough information for matching.
+NON_BLOCKING_INFORMATION_DIMENSIONS = {
+    "financing_fit",
+    "company_quality",
+    "freshness_fit",
+    "team_quality",
+}
 
 
 def load_json(path: Path) -> Any:
@@ -79,7 +87,12 @@ def score_job(job: dict[str, Any], algorithm: dict[str, Any], preferences: dict[
     components: list[dict[str, Any]] = []
     known_weight = 0.0
     weighted_points = 0.0
-    total_weight = float(sum(preferences["weights"].values()))
+    required_weights = {
+        dimension: weight for dimension, weight in preferences["weights"].items()
+        if dimension not in NON_BLOCKING_INFORMATION_DIMENSIONS
+    }
+    total_weight = float(sum(required_weights.values()))
+    known_required_weight = 0.0
     for dimension, weight in preferences["weights"].items():
         value = evaluation[dimension]
         factor = algorithm["dimensions"][dimension].get(value)
@@ -87,6 +100,8 @@ def score_job(job: dict[str, Any], algorithm: dict[str, Any], preferences: dict[
         if known:
             known_weight += weight
             weighted_points += weight * factor
+            if dimension in required_weights:
+                known_required_weight += weight
         components.append({
             "dimension": dimension,
             "classification": value,
@@ -95,10 +110,14 @@ def score_job(job: dict[str, Any], algorithm: dict[str, Any], preferences: dict[
             "points": round(weight * factor, 2) if known else None,
         })
     match_score = round(weighted_points / known_weight * 100, 1) if known_weight else 0.0
-    required_text = (job.get("job_description_raw"), job.get("responsibilities"))
+    # OCR pipeline uses responsibility_summary as the normalized field name;
+    # accept the public-schema alias too so a complete list-page JD is not
+    # incorrectly downgraded to "information insufficient".
+    responsibility_text = job.get("responsibilities") or job.get("responsibility_summary")
+    required_text = (job.get("job_description_raw"), responsibility_text)
     complete_jd = all(value not in (None, "", UNKNOWN) and len(str(value)) >= 20 for value in required_text)
     capture_factor = 1.0 if job.get("verification_status") == "captured_jd" and complete_jd else 0.55
-    evidence_confidence = round(known_weight / total_weight * capture_factor, 3)
+    evidence_confidence = round(known_required_weight / total_weight * capture_factor, 3)
     hard_reasons = hard_filter_reasons(job, evaluation, algorithm)
     threshold = algorithm["thresholds"]
     if hard_reasons:
@@ -118,9 +137,14 @@ def score_job(job: dict[str, Any], algorithm: dict[str, Any], preferences: dict[
         for item in sorted(components, key=lambda item: item["points"] or -1, reverse=True)
         if item["known"] and (item["points"] or 0) >= item["weight"] * 0.8
     ][:3]
+    missing_items = [
+        item for item in job.get("missing_information", [])
+        if item != "完整JD或职责证据"
+    ] if complete_jd else list(job.get("missing_information", []))
     missing = list(dict.fromkeys([
-        *job.get("missing_information", []),
-        *(item["dimension"] for item in components if not item["known"]),
+        *missing_items,
+        *(item["dimension"] for item in components
+          if not item["known"] and item["dimension"] not in NON_BLOCKING_INFORMATION_DIMENSIONS),
         *([] if complete_jd else ["完整JD或职责证据"]),
     ]))
     output.update({

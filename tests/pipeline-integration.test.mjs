@@ -81,6 +81,15 @@ test("complete OCR upgrades a public candidate and preserves index evidence", ()
   assertValidSiteJobs([merged]);
 });
 
+test("list-page right-panel OCR counts as complete JD evidence", () => {
+  const [merged] = mergePipelineJobs({ jobs: [] }, { jobs: [ocrJob({
+    capture_status: "list_detail_captured",
+    evidence_source: [{ type: "ocr_jd", observed_at: "2026-08-02T00:00:00Z", capture_status: "list_detail_captured" }],
+  })] });
+  assert.equal(merged.verification_status, "captured_jd");
+  assertValidSiteJobs([merged]);
+});
+
 test("later index observation cannot downgrade a verified record", () => {
   const verified = scoreJob(ocrJob());
   const merged = mergeJobPair(verified, indexJob({ collected_at: "2026-08-03T00:00:00Z" }));

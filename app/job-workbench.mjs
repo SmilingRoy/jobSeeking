@@ -11,7 +11,7 @@ const requiredStringFields = ["id", "url", "title", "city", "recommendation", "p
 const optionalStringFields = [
   "company", "district", "office_location", "salary", "workExperience", "education",
   "company_size", "financing_stage", "industry", "recruiter_name", "recruiter_role",
-  "recruiter_activity", "description", "job_description_raw", "responsibilities",
+  "recruiter_activity", "recruiter_type", "description", "job_description_raw", "responsibilities",
   "requirements", "collected_at", "capture_status", "responsibility_fit", "title_fit",
   "scoring_config_version", "job_status",
 ];
@@ -87,6 +87,7 @@ export function normalizeJob(job) {
     recruiter_name: String(job.recruiter_name ?? "unknown"),
     recruiter_role: String(job.recruiter_role ?? "unknown"),
     recruiter_activity: String(job.recruiter_activity ?? "unknown"),
+    recruiter_type: String(job.recruiter_type ?? "unknown"),
     description: String(job.description ?? job.job_description_raw ?? "信息不足"),
     job_description_raw: String(job.job_description_raw ?? "unknown"),
     responsibilities: String(job.responsibilities ?? "unknown"),

@@ -21,11 +21,26 @@ from ocr_pipeline_lib import (  # noqa: E402
     build_structured_jobs,
     map_scored_jobs,
     merge_ocr_pages,
+    parse_card_hint,
+    infer_recruiter_type,
     validate_site_jobs,
 )
 
 
 class OcrPipelineTests(unittest.TestCase):
+    def test_maps_browser_card_hint(self) -> None:
+        mapped = parse_card_hint("b端产品经理-购车方向 -K 3-5年 本科 中后台产品 电商产品 NIO蔚来 上海·闵行区·虹桥")
+        self.assertEqual(mapped["title"], "b端产品经理-购车方向")
+        self.assertEqual(mapped["company"], "NIO蔚来")
+        self.assertEqual(mapped["experience"], "3-5年")
+        self.assertEqual(mapped["education"], "本科")
+        self.assertEqual(mapped["district"], "闵行区")
+
+    def test_maps_recruiter_type_from_card_or_jd_evidence(self) -> None:
+        self.assertEqual(infer_recruiter_type("猎头", "资深产品经理"), "猎头")
+        self.assertEqual(infer_recruiter_type("", "招聘专家"), "HR")
+        self.assertEqual(infer_recruiter_type("", "岗位职责"), "unknown")
+
     def test_merges_detail_pages_without_repeating_overlap(self) -> None:
         merged = merge_ocr_pages([
             "岗位职责\n负责需求分析\n负责方案设计\n",
@@ -34,6 +49,13 @@ class OcrPipelineTests(unittest.TestCase):
         self.assertEqual(merged.count("负责方案设计"), 1)
         self.assertIn("推动版本上线", merged)
         self.assertIn("任职要求", merged)
+
+    def test_splits_common_ocr_heading_variants(self) -> None:
+        responsibility, qualification = __import__("ocr_pipeline_lib").split_jd(
+            "职位职责\n负责产品规划和迭代\n【任职要求】\n本科以上学历\n"
+        )
+        self.assertIn("负责产品规划和迭代", responsibility)
+        self.assertIn("本科以上学历", qualification)
 
     def test_builds_complete_record_and_quarantines_unsafe_binding(self) -> None:
         fixture = ROOT / "fixtures/ocr-pipeline"
@@ -77,7 +99,8 @@ class OcrPipelineTests(unittest.TestCase):
             self.assertIn("exit=7", destination.read_text(encoding="utf-8"))
 
     def test_one_command_pipeline_with_fake_ocr_binary(self) -> None:
-        skill_root = Path.home() / ".codex/skills/screen-boss-pm-jobs"
+        scorer = ROOT / "scripts/score_jobs.py"
+        scoring_config = ROOT / "config/job-scoring.json"
         with tempfile.TemporaryDirectory() as directory:
             temp = Path(directory)
             screenshots = temp / "screenshots"
@@ -113,8 +136,8 @@ class OcrPipelineTests(unittest.TestCase):
                 "--work-dir", str(temp / "work"),
                 "--output", str(output),
                 "--ocr-binary", str(binary),
-                "--scorer", str(skill_root / "scripts/score_jobs.py"),
-                "--scoring-config", str(skill_root / "references/scoring-config.json"),
+                "--scorer", str(scorer),
+                "--scoring-config", str(scoring_config),
             ], check=True, capture_output=True, text=True)
             payload = json.loads(output.read_text(encoding="utf-8"))
             self.assertEqual(payload["metadata"]["job_count"], 1)

@@ -9,18 +9,23 @@ from pathlib import Path
 from typing import Any
 
 UNKNOWN = "unknown"
-COMPLETE_CAPTURE_STATUSES = {"captured"}
+COMPLETE_CAPTURE_STATUSES = {"captured", "detail_captured", "list_detail_captured"}
 REVIEW_CAPTURE_STATUSES = {
     "detail_unchanged",
     "detail_not_jd",
     "detail_capped",
     "detail_initial",
 }
-JD_HEADINGS = ("职位描述", "岗位描述", "岗位职责", "工作职责")
-REQUIREMENT_HEADINGS = ("任职要求", "职位要求", "岗位要求")
+JD_HEADINGS = ("职位描述", "岗位描述", "岗位职责", "职位职责", "工作职责", "职责概述", "职责描述")
+REQUIREMENT_HEADINGS = ("任职要求", "职位要求", "岗位要求", "任职资格")
 EXPERIENCE_VALUES = ("经验不限", "在校生", "应届生", "1年以内", "1-3年", "3-5年", "5-10年", "10年以上")
 EDUCATION_VALUES = ("学历不限", "初中及以下", "中专/中技", "高中", "大专", "本科", "硕士", "博士")
 DISTRICTS = ("浦东新区", "徐汇区", "静安区", "杨浦区", "闵行区", "虹口区", "长宁区", "普陀区", "松江区", "嘉定区", "宝山区", "青浦区", "奉贤区", "黄浦区", "金山区", "崇明区")
+CARD_TAGS = {
+    "C端产品", "B端产品", "用户/功能产品", "中后台产品", "电商产品", "内容产品", "社交产品",
+    "数据产品", "物联网产品", "TO C", "TMS运输管理", "承运人业务", "直播/视频产品", "变现",
+    "用户增长", "策略", "AI产品", "海外产品", "其他行业",
+}
 
 
 def clean_lines(text: str) -> list[str]:
@@ -30,6 +35,22 @@ def clean_lines(text: str) -> list[str]:
         if line and line not in lines:
             lines.append(line)
     return lines
+
+
+def ocr_text(text: str) -> str:
+    """Read structured Vision output while remaining compatible with legacy text OCR."""
+    try:
+        payload = json.loads(text)
+    except json.JSONDecodeError:
+        return text
+    if not isinstance(payload, dict) or payload.get("status") != "ok":
+        return ""
+    lines = payload.get("lines", [])
+    return "\n".join(
+        str(line.get("text", "")).strip()
+        for line in lines
+        if isinstance(line, dict) and str(line.get("text", "")).strip()
+    )
 
 
 def merge_ocr_pages(texts: list[str]) -> str:
@@ -73,12 +94,17 @@ def split_jd(detail_text: str) -> tuple[str, str]:
     lines = clean_lines(detail_text)
     responsibility = UNKNOWN
     qualification = UNKNOWN
+    def is_heading(line: str, markers: tuple[str, ...]) -> bool:
+        normalized = re.sub(r"^[\[【(（\s]+|[\]】)）\s]+$", "", line).strip()
+        normalized = re.sub(r"^(?:[一二三四五六七八九十\d]+[、.．)]\s*)", "", normalized)
+        return any(normalized == marker or normalized.startswith(f"{marker}:") or normalized.startswith(f"{marker}：") for marker in markers)
+
     responsibility_index = next(
-        (index for index, line in enumerate(lines) if any(re.match(rf"^{re.escape(marker)}(?:\s*[:：]|$)", line) for marker in JD_HEADINGS)),
+        (index for index, line in enumerate(lines) if is_heading(line, JD_HEADINGS)),
         None,
     )
     requirement_index = next(
-        (index for index, line in enumerate(lines) if any(re.match(rf"^{re.escape(marker)}(?:\s*[:：]|$)", line) for marker in REQUIREMENT_HEADINGS)),
+        (index for index, line in enumerate(lines) if is_heading(line, REQUIREMENT_HEADINGS)),
         None,
     )
     if responsibility_index is not None:
@@ -101,6 +127,41 @@ def infer_company(lines: list[str], title: str) -> str:
         if 2 <= len(line) <= 40:
             candidates.append(line)
     return candidates[-1] if candidates else UNKNOWN
+
+
+def infer_recruiter_type(card_text: str, detail_text: str, hint: str = "") -> str:
+    evidence = f"{hint}\n{card_text}\n{detail_text}"
+    if re.search(r"(?:猎头顾问|猎头招聘|猎头)", evidence):
+        return "猎头"
+    if re.search(r"(?:招聘专家|招聘专员|招聘顾问|HR|人事专员|人力资源专员)", evidence, flags=re.I):
+        return "HR"
+    return UNKNOWN
+
+
+def parse_card_hint(hint: str) -> dict[str, Any]:
+    """Map the stable, single-card hint sent by the browser into job fields."""
+    value = re.sub(r"\s+", " ", str(hint or "")).strip()
+    if not value:
+        return {"title": UNKNOWN, "company": UNKNOWN, "experience": UNKNOWN, "education": UNKNOWN, "district": UNKNOWN}
+    tokens = value.split(" ")
+    salary_index = next(
+        (index for index, token in enumerate(tokens) if re.search(r"[\uE000-\uF8FF].*[-·].*[Kk]|\d+(?:\.\d+)?-\d+(?:\.\d+)?K", token)),
+        None,
+    )
+    title = " ".join(tokens[:salary_index]) if salary_index is not None else tokens[0]
+    experience = next((item for item in EXPERIENCE_VALUES if item in value), UNKNOWN)
+    education = next((item for item in EDUCATION_VALUES if item in value), UNKNOWN)
+    location_index = value.rfind("上海")
+    location = value[location_index:] if location_index >= 0 else ""
+    district = next((item for item in DISTRICTS if item in location), UNKNOWN)
+    prefix = value[:location_index].strip() if location_index >= 0 else value
+    education_match = re.search(r"(?:学历不限|初中及以下|中专/中技|高中|大专|本科|硕士|博士)", prefix)
+    company = UNKNOWN
+    if education_match:
+        candidates = [item for item in prefix[education_match.end():].split() if item not in CARD_TAGS]
+        if candidates:
+            company = candidates[-1]
+    return {"title": title or UNKNOWN, "company": company, "experience": experience, "education": education, "district": district}
 
 
 def evaluation_for(title: str, detail: str, directions: list[str], experience: str, responsibility: str) -> dict[str, str]:
@@ -143,8 +204,11 @@ def evaluation_for(title: str, detail: str, directions: list[str], experience: s
 def read_detail_text(detail_dir: Path | None, sequence: int) -> tuple[str, list[str]]:
     if not detail_dir:
         return "", []
-    paths = sorted(detail_dir.glob(f"job_{sequence:03d}_detail_*.txt"))
-    texts = [path.read_text(encoding="utf-8") for path in paths if path.exists()]
+    paths = sorted({
+        *detail_dir.glob(f"job_{sequence:04d}_detail_*.txt"),
+        *detail_dir.glob(f"job_{sequence:03d}_detail_*.txt"),
+    })
+    texts = [ocr_text(path.read_text(encoding="utf-8")) for path in paths if path.exists()]
     return merge_ocr_pages(texts), [str(path) for path in paths]
 
 
@@ -163,22 +227,28 @@ def build_structured_jobs(manifest: dict[str, Any], ocr_dir: Path, detail_dir: P
             review.append({"sequence": sequence, "url": url, "reasons": ["duplicate_job_url"]})
             continue
         seen_urls.add(url.lower())
-        status = str(item.get("status", "unknown"))
+        status = str(item.get("status", item.get("capture_status", "unknown")))
         if status not in COMPLETE_CAPTURE_STATUSES:
             reasons.append(f"capture_status={status}")
 
-        card_path = ocr_dir / f"job_{sequence:03d}_card_context.txt"
-        card_text = card_path.read_text(encoding="utf-8") if card_path.exists() else ""
+        card_path = ocr_dir / f"job_{sequence:04d}_card_context.txt"
+        if not card_path.exists():
+            card_path = ocr_dir / f"job_{sequence:03d}_card_context.txt"
+        card_text = ocr_text(card_path.read_text(encoding="utf-8")) if card_path.exists() else ""
+        card_hint = parse_card_hint(item.get("title_hint", ""))
         lines = clean_lines(card_text)
         while lines and lines[0] in {"猎头", "急招", "代招"}:
             lines.pop(0)
-        title = lines[0] if lines and "产品经理" in lines[0] else UNKNOWN
+        detail_text, detail_paths = read_detail_text(detail_dir, sequence)
+        detail_lines = clean_lines(detail_text)
+        recruiter_type = infer_recruiter_type(card_text, detail_text, item.get("title_hint", ""))
+        title = card_hint["title"] if card_hint["title"] != UNKNOWN else (lines[0] if lines and "产品经理" in lines[0] else next(
+            (line for line in detail_lines[:20] if "产品经理" in line), UNKNOWN
+        ))
         if title == UNKNOWN:
             reasons.append("title_not_confirmed_product_manager")
-        detail_text, detail_paths = read_detail_text(detail_dir, sequence)
         if not detail_text:
             reasons.append("missing_detail_ocr")
-        detail_lines = clean_lines(detail_text)
         if detail_text and not any(
             any(re.match(rf"^{re.escape(marker)}(?:\s*[:：]|$)", line) for marker in (*JD_HEADINGS, *REQUIREMENT_HEADINGS))
             for line in detail_lines
@@ -190,22 +260,24 @@ def build_structured_jobs(manifest: dict[str, Any], ocr_dir: Path, detail_dir: P
         responsibility, qualification = split_jd(detail_text)
         if responsibility == UNKNOWN:
             reasons.append("missing_responsibility")
-        if qualification == UNKNOWN:
-            reasons.append("missing_qualification")
-        company = infer_company(lines, title)
+        # Some BOSS cards expose responsibilities without a separate requirements section.
+        # Keep the field unknown for analysis, but do not quarantine an otherwise usable JD.
+        company = card_hint["company"] if card_hint["company"] != UNKNOWN else infer_company(lines, title)
         if company == UNKNOWN:
             reasons.append("company_unknown")
-        experience = next((value for value in lines if value in EXPERIENCE_VALUES), UNKNOWN)
-        education = next((value for value in lines if value in EDUCATION_VALUES), UNKNOWN)
+        experience = card_hint["experience"] if card_hint["experience"] != UNKNOWN else next((value for value in lines if value in EXPERIENCE_VALUES), UNKNOWN)
+        education = card_hint["education"] if card_hint["education"] != UNKNOWN else next((value for value in lines if value in EDUCATION_VALUES), UNKNOWN)
         evidence_text = f"{card_text}\n{detail_text}".strip()
         districts = [district for district in DISTRICTS if district in evidence_text]
-        district = districts[0] if len(districts) == 1 else UNKNOWN
-        if len(districts) > 1:
+        district = card_hint["district"] if card_hint["district"] != UNKNOWN else (districts[0] if len(districts) == 1 else UNKNOWN)
+        if card_hint["district"] == UNKNOWN and len(districts) > 1:
             reasons.append("district_conflict")
         salary = first_match(r"\d+(?:\.\d+)?-\d+(?:\.\d+)?K(?:·\d+薪)?", detail_text or card_text)
-        directions = infer_direction(title, detail_text) if title != UNKNOWN else []
+        directions = infer_direction(title, f"{item.get('title_hint', '')} {detail_text}") if title != UNKNOWN else []
         evaluation = evaluation_for(title, detail_text, directions, experience, responsibility)
-        missing = ["公司规模", "融资阶段"]
+        # Company enrichment is optional and must not make a complete JD look
+        # incomplete. It can be filled later from company-level sources.
+        missing: list[str] = []
         if responsibility == UNKNOWN:
             missing.insert(0, "岗位职责")
         if qualification == UNKNOWN:
@@ -232,6 +304,7 @@ def build_structured_jobs(manifest: dict[str, Any], ocr_dir: Path, detail_dir: P
             "recruiter_name": UNKNOWN,
             "recruiter_role": UNKNOWN,
             "recruiter_activity": UNKNOWN,
+            "recruiter_type": recruiter_type,
             "published_or_updated_at": UNKNOWN,
             "job_description_raw": detail_text or UNKNOWN,
             "responsibility_summary": responsibility,
@@ -243,7 +316,7 @@ def build_structured_jobs(manifest: dict[str, Any], ocr_dir: Path, detail_dir: P
             "team_and_reporting": UNKNOWN,
             "work_mode": "上海现场办公",
             "travel_requirement": UNKNOWN,
-            "positive_evidence": [f"卡片识别岗位名：{title}"] if title != UNKNOWN else [],
+            "positive_evidence": [f"卡片映射岗位名：{title}", f"卡片映射公司：{company}"] if title != UNKNOWN else [],
             "risk_flags": [],
             "missing_information": missing,
             "interview_questions": ["该岗位负责的核心业务指标是什么？", "产品、研发和运营团队如何分工？"],
@@ -261,15 +334,28 @@ def build_structured_jobs(manifest: dict[str, Any], ocr_dir: Path, detail_dir: P
 
 
 def map_scored_jobs(scored: dict[str, Any]) -> list[dict[str, Any]]:
-    labels = {"推荐投递": "优先推荐", "可以考虑": "可以考虑", "信息不足，待判断": "信息不足", "不推荐": "不推荐"}
+    non_blocking_dimensions = {"financing_fit", "company_quality", "freshness_fit", "team_quality"}
+    labels = {
+        "推荐投递": "优先推荐",
+        "优先推荐": "优先推荐",
+        "可以考虑": "可以考虑",
+        "谨慎评估": "谨慎评估",
+        "信息不足，待判断": "信息不足",
+        "信息不足": "信息不足",
+        "不推荐": "不推荐",
+    }
     fit_map = {"high": "高", "medium": "中", "low": "低", "excluded": "低", "unknown": "unknown"}
     config_version = str(scored.get("metadata", {}).get("scoring_config_version", "legacy-scoring-unknown"))
     mapped: list[dict[str, Any]] = []
     for job in scored.get("jobs", []):
         evaluation = job.get("evaluation", {})
         review_reasons = job.get("review_reasons") or []
-        known_dimensions = sum(value not in (None, "", UNKNOWN) for value in evaluation.values())
-        dimension_count = max(len(evaluation), 1)
+        required_evaluation = {
+            key: value for key, value in evaluation.items()
+            if key not in non_blocking_dimensions
+        }
+        known_dimensions = sum(value not in (None, "", UNKNOWN) for value in required_evaluation.values())
+        dimension_count = max(len(required_evaluation), 1)
         complete_jd = job.get("job_description_raw") not in (None, "", UNKNOWN) and job.get("responsibility_summary") not in (None, "", UNKNOWN)
         capture_factor = 1.0 if job.get("verification_status") == "captured_jd" and complete_jd else 0.55
         evidence_confidence = round(known_dimensions / dimension_count * capture_factor, 3)
@@ -288,9 +374,12 @@ def map_scored_jobs(scored: dict[str, Any]) -> list[dict[str, Any]]:
             for dimension, classification in evaluation.items()
         ]
         match_score = job.get("match_score")
+        job_url = job["job_url"]
+        url_match = re.search(r"/job_detail/([^/]+)\.html$", str(job_url), re.IGNORECASE)
+        stable_id = url_match.group(1) if url_match else str(job["job_id"]).replace("/", "-")
         mapped.append({
-            "id": str(job["job_id"]).replace("/", "-"),
-            "url": job["job_url"],
+            "id": stable_id,
+            "url": job_url,
             "title": job["job_title"],
             "company": job["company_name"],
             "city": job["city"],
@@ -305,6 +394,7 @@ def map_scored_jobs(scored: dict[str, Any]) -> list[dict[str, Any]]:
             "recruiter_name": job["recruiter_name"],
             "recruiter_role": job["recruiter_role"],
             "recruiter_activity": job["recruiter_activity"],
+            "recruiter_type": job.get("recruiter_type", UNKNOWN),
             "description": job["job_description_raw"],
             "job_description_raw": job["job_description_raw"],
             "responsibilities": job["responsibility_summary"],
@@ -330,7 +420,10 @@ def map_scored_jobs(scored: dict[str, Any]) -> list[dict[str, Any]]:
                 "detail": "BOSS岗位卡片和右侧JD截图 Vision OCR + 确定性评分规则",
             }],
             "capture_status": job.get("capture_status", "unknown"),
-            "missing_information": job["missing_information"],
+            "missing_information": [
+                item for item in job["missing_information"]
+                if item not in {"公司规模", "融资阶段", "financing_fit", "company_quality", "freshness_fit", "team_quality"}
+            ],
             "risk_flags": job["risk_flags"],
             "interview_questions": job["interview_questions"],
             "review_reasons": review_reasons,

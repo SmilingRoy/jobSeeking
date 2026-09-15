@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Job Lens OCR Capture",
+  "version": "0.1.0",
+  "description": "Capture BOSS job cards and detail pages for the local Job Lens OCR pipeline.",
+  "permissions": ["activeTab", "alarms", "scripting", "storage", "tabs"],
+  "host_permissions": ["<all_urls>", "http://127.0.0.1:4318/*"],
+  "action": { "default_title": "Job Lens OCR Capture", "default_popup": "popup.html" },
+  "background": { "service_worker": "background.js", "type": "module" },
+  "content_scripts": [{
+    "matches": ["https://www.zhipin.com/*", "https://m.zhipin.com/*"],
+    "js": ["content.js"],
+    "run_at": "document_idle"
+  }]
+}

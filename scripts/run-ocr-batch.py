@@ -21,6 +21,35 @@ def normalized_image(src: Path) -> tuple[Path, tempfile.TemporaryDirectory[str] 
         raise
     return normalized, temp_dir
 
+
+def run_ocr_file(source: Path, destination: Path, ocr_binary: Path) -> str:
+    """Run OCR for one image and persist either text or an actionable error."""
+    temp_dir: tempfile.TemporaryDirectory[str] | None = None
+    try:
+        normalized, temp_dir = normalized_image(source)
+        result = subprocess.run(
+            [str(ocr_binary), str(normalized)],
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        if result.returncode != 0:
+            detail = result.stderr.strip() or "no stderr output"
+            destination.write_text(
+                f"ERROR exit={result.returncode}: {detail}\n",
+                encoding="utf-8",
+            )
+            return "error"
+        destination.write_text(result.stdout, encoding="utf-8")
+        return "ok"
+    except Exception as exc:
+        destination.write_text(f"ERROR {exc!r}\n", encoding="utf-8")
+        return "error"
+    finally:
+        if temp_dir is not None:
+            temp_dir.cleanup()
+
+
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("input_dir", type=Path)
@@ -33,18 +62,7 @@ def main() -> None:
     def one(src: Path) -> str:
         dst = a.output_dir / f"{src.stem}.txt"
         if dst.exists(): return "skip"
-        temp_dir: tempfile.TemporaryDirectory[str] | None = None
-        try:
-            normalized, temp_dir = normalized_image(src)
-            result = subprocess.run([str(a.ocr_binary), str(normalized)], capture_output=True, text=True, timeout=120)
-            dst.write_text(result.stdout, encoding="utf-8")
-            return "ok"
-        except Exception as exc:
-            dst.write_text(f"ERROR {exc!r}\n", encoding="utf-8")
-            return "error"
-        finally:
-            if temp_dir is not None:
-                temp_dir.cleanup()
+        return run_ocr_file(src, dst, a.ocr_binary)
     with concurrent.futures.ThreadPoolExecutor(max_workers=a.workers) as pool:
         results = list(pool.map(one, files))
     print(f"ocr_files={len(files)} ok={results.count('ok')} skipped={results.count('skip')} errors={results.count('error')} output={a.output_dir}")

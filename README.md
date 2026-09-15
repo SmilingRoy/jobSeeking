@@ -104,8 +104,39 @@ pnpm run collect:index -- --provider brave --pages 3 --modes exact --district-sh
 
 ### 截图 OCR 与岗位评估
 
-原位采集器保存岗位卡片和右侧详情截图后，先在 macOS 原生环境运行 Vision OCR，
-再把 OCR 文本归一化为岗位 schema，最后调用既定评分配置生成推荐结论：
+项目现在以 Chrome OCR 采集为主。先在 Chrome 加载 `capture-extension/` 未打包扩展，
+打开已登录的 BOSS 搜索结果页，再启动本地采集桥接。采集器只点击左侧岗位卡片，
+等待右侧分栏 JD 更新并截图，不跳转到详情 URL，以降低频繁导航触发风控的概率：
+
+```bash
+pnpm run ocr:capture
+```
+
+在扩展弹窗中设置采集数量并点击“开始采集”。扩展只操作当前页面和岗位截图，
+不会读取 Cookie 或密码；截图和 manifest 会保存到 `outputs/ocr-runs/<run-id>/`。
+
+也可以通过本地控制命令自动触发采集：
+
+```bash
+pnpm run ocr:start -- --limit 30  # 采集 30 个后自动停止
+pnpm run ocr:start                # 持续采集，直到发送停止命令
+pnpm run ocr:stop
+pnpm run ocr:status
+```
+
+扩展会定时领取控制命令，因此开始命令最多约 30 秒后生效；采集过程中可随时发送停止命令。
+当前活动标签页必须是已登录的 BOSS 页面。
+
+批次完成后运行：
+
+```bash
+pnpm run ocr:process -- --run outputs/ocr-runs/<run-id>
+```
+
+处理链路为：Vision OCR、图片规范化、字段结构化、项目内 matching-v2 评分、
+待复核队列、按岗位 URL 去重合并。单个岗位失败不会中断整个批次。
+
+也可以对已有截图批次直接运行 OCR：
 
 ```bash
 python3 scripts/ocr-and-score.py \\
@@ -117,6 +148,8 @@ python3 scripts/ocr-and-score.py \\
 输出 `data/jobs-structured.json`（schema 原始层）、`data/jobs-scored.json`（评分层）
 和网站使用的 `data/jobs.json`。只有完整 JD 和职责字段满足质量门槛的岗位，才会进入
 “推荐投递/可以考虑”；其余统一保留为“信息不足”，不根据缺失内容猜测。
+
+Vision OCR 输出包含识别文本、置信度和归一化 bounding box；旧的纯文本 OCR 文件仍可兼容读取。
 
 ### 统一岗位合同
 
@@ -245,4 +278,3 @@ actions tied to the current ChatGPT user. Leave public content anonymous.
 数据流可以概括为：
 
 公开索引/用户截图 → 证据保留 → 统一岗位合同 → Workbench 决策 →（可选 OCR/评分升级）→ 校验构建 → 私有 Sites
-

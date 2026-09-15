@@ -3,7 +3,10 @@ import { scoreJob } from "./job-scoring.mjs";
 
 const ARRAY_FIELDS = ["tags", "directions", "missing_information", "risk_flags", "interview_questions", "review_reasons"];
 const FRESHNESS_FIELDS = ["collected_at", "last_seen_at", "published_or_updated_at", "recruiter_activity", "salary"];
-const OCR_COMPLETE_STATUSES = new Set(["captured"]);
+// The browser collector records list-page right-panel captures as
+// `list_detail_captured`; older/imported batches may use `captured` or
+// `detail_captured`.
+const OCR_COMPLETE_STATUSES = new Set(["captured", "detail_captured", "list_detail_captured"]);
 const CONFLICT_FIELDS = ["title", "company", "city"];
 
 function unique(values) {
@@ -75,7 +78,8 @@ export function mergeJobPair(existingInput, incomingInput) {
   const base = incomingComplete || (!existingVerified && incoming.pipeline === "ocr_jd") ? incoming : existing;
   const supplement = base === incoming ? existing : incoming;
   const merged = { ...base };
-  const conflicts = existing.pipeline === "ocr_jd" && incoming.pipeline === "ocr_jd"
+  const sameCapture = existing.collected_at === incoming.collected_at;
+  const conflicts = existing.pipeline === "ocr_jd" && incoming.pipeline === "ocr_jd" && !sameCapture
     ? CONFLICT_FIELDS.filter((field) => !isUnknown(existing[field]) && !isUnknown(incoming[field]) && existing[field] !== incoming[field])
     : [];
 
@@ -85,6 +89,10 @@ export function mergeJobPair(existingInput, incomingInput) {
   }
   for (const field of ARRAY_FIELDS) {
     merged[field] = unique([...(Array.isArray(existing[field]) ? existing[field] : []), ...(Array.isArray(incoming[field]) ? incoming[field] : [])]);
+  }
+  if (sameCapture && existing.pipeline === "ocr_jd" && incoming.pipeline === "ocr_jd") {
+    // Reprocessing the same capture should replace stale parser warnings from an older mapping pass.
+    merged.review_reasons = [...(incoming.review_reasons ?? [])];
   }
   merged.evidence_source = mergeEvidence(existing.evidence_source, incoming.evidence_source);
   merged.first_seen_at = [existing.first_seen_at, incoming.first_seen_at, existing.collected_at, incoming.collected_at]

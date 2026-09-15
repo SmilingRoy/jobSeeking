@@ -18,12 +18,8 @@ from ocr_pipeline_lib import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-SKILL_ROOT = Path(
-    os.environ.get(
-        "SCREEN_BOSS_PM_SKILL_ROOT",
-        Path.home() / ".codex/skills/screen-boss-pm-jobs",
-    )
-)
+DEFAULT_SCORER = ROOT / "scripts/score_jobs.py"
+DEFAULT_SCORING_CONFIG = ROOT / "config/job-scoring.json"
 
 
 def main() -> None:
@@ -35,8 +31,18 @@ def main() -> None:
     parser.add_argument("--keep-structured", type=Path, default=ROOT / "data/jobs-scored.json")
     parser.add_argument("--review-queue", type=Path, default=ROOT / "outputs/ocr-review-queue.json")
     parser.add_argument("--report", type=Path, default=ROOT / "outputs/ocr-job-report.md")
-    parser.add_argument("--scorer", type=Path, default=SKILL_ROOT / "scripts/score_jobs.py")
-    parser.add_argument("--scoring-config", type=Path, default=SKILL_ROOT / "references/scoring-config.json")
+    parser.add_argument("--scorer", type=Path, default=DEFAULT_SCORER)
+    parser.add_argument("--scoring-config", type=Path, default=DEFAULT_SCORING_CONFIG)
+    parser.add_argument(
+        "--filter-out-of-scope",
+        action="store_true",
+        help="仅输出上海且标题包含‘产品经理’的岗位，其他岗位保留在结构化批次结果中",
+    )
+    parser.add_argument(
+        "--only-complete-jd",
+        action="store_true",
+        help="网站输出仅保留已确认有完整 JD 证据的岗位",
+    )
     args = parser.parse_args()
 
     for required in (args.manifest, args.scorer, args.scoring_config):
@@ -90,6 +96,13 @@ def main() -> None:
     )
     scored = json.loads(args.keep_structured.read_text(encoding="utf-8"))
     mapped = map_scored_jobs(scored)
+    if args.filter_out_of_scope:
+        mapped = [
+            job for job in mapped
+            if job.get("city") == "上海" and "产品经理" in str(job.get("title", ""))
+        ]
+    if args.only_complete_jd:
+        mapped = [job for job in mapped if job.get("verification_status") == "captured_jd"]
     validate_site_jobs(mapped)
     payload = {
         "metadata": {

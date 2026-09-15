@@ -25,6 +25,11 @@
     "validate:data": "node scripts/validate-site-jobs.mjs",
     "ocr:score": "python3 scripts/ocr-and-score.py",
     "ocr:pipeline": "python3 scripts/run-ocr-pipeline.py",
+    "ocr:capture": "node scripts/ocr-capture-bridge.mjs",
+    "ocr:start": "node scripts/ocr-control.mjs start",
+    "ocr:stop": "node scripts/ocr-control.mjs stop",
+    "ocr:status": "node scripts/ocr-control.mjs status",
+    "ocr:process": "node scripts/ocr-process.mjs",
     "prepare:sites": "node scripts/prepare-sites-dist.mjs"
   },
   "dependencies": {

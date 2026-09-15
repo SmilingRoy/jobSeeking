@@ -13,8 +13,10 @@ const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
 
 const localBindingConfig = {
   main: "./worker/index.ts",
-  // Sites now treats nodejs_compat as implicit from this compatibility date.
-  compatibility_date: "2026-08-04",
+  // Keep the local runtime compatible with the locked Miniflare version and
+  // explicitly enable Node.js APIs required by vinext.
+  compatibility_date: "2026-05-22",
+  compatibility_flags: ["nodejs_compat"],
   d1_databases: d1
     ? [
         {
