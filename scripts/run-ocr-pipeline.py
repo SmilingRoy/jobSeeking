@@ -65,6 +65,8 @@ def main() -> None:
             str(args.scorer),
             "--scoring-config",
             str(args.scoring_config),
+            "--filter-out-of-scope",
+            "--only-complete-jd",
         ],
         check=True,
     )

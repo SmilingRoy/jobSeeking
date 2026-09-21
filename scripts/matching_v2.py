@@ -122,7 +122,7 @@ def score_job(job: dict[str, Any], algorithm: dict[str, Any], preferences: dict[
     threshold = algorithm["thresholds"]
     if hard_reasons:
         recommendation = "不推荐"
-    elif evidence_confidence < algorithm["confidence_floor_for_recommendation"] or not complete_jd:
+    elif not complete_jd:
         recommendation = "信息不足"
     elif match_score >= threshold["preferred"]:
         recommendation = "优先推荐"
