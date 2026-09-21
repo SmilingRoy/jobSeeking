@@ -10,7 +10,7 @@ type Job = ReturnType<typeof normalizeJob> & { recommendation: Recommendation };
 
 type Filters = {
   search: string;
-  recommendation: "全部结论" | "值得投递" | Recommendation;
+  recommendation: "全部结论" | Recommendation;
   direction: string;
   minimumScore: number;
   userStatus: "全部状态" | UserStatus;
@@ -22,7 +22,6 @@ const bundledPayload = jobsPayload as { metadata?: Record<string, unknown>; jobs
 const bundledJobs = bundledPayload.jobs.map(normalizeJob) as Job[];
 const recommendationOrder: Recommendation[] = ["优先推荐", "可以考虑", "谨慎评估", "信息不足", "不推荐"];
 const visibleRecommendationOrder: Recommendation[] = ["优先推荐", "可以考虑", "不推荐"];
-const worthwhileRecommendations = new Set<Recommendation>(["优先推荐", "可以考虑"]);
 const visibleUserStatuses: UserStatus[] = ["未查看", "已查看"];
 const defaultFilters: Filters = { search: "", recommendation: "全部结论", direction: "全部方向", minimumScore: 0, userStatus: "全部状态", verification: "全部验证状态", recruiterType: "全部招聘者" };
 
@@ -160,7 +159,6 @@ export default function Home() {
       const status = userStates[job.id] ?? "未查看";
       return (!query || `${job.title} ${job.company} ${job.description}`.toLowerCase().includes(query))
         && (filters.recommendation === "全部结论"
-          || (filters.recommendation === "值得投递" && worthwhileRecommendations.has(job.recommendation))
           || job.recommendation === filters.recommendation)
         && (filters.direction === "全部方向" || job.directions.includes(filters.direction))
         && (filters.minimumScore === 0 || (job.score ?? -1) >= filters.minimumScore)
@@ -190,11 +188,11 @@ export default function Home() {
     <header className="topbar"><a className="brand" href="#top"><span className="brand-mark"><span /></span><span>职位雷达</span></a><div className="topbar-actions"><span className="data-note"><span className="status-dot" />上海 · {jobs.length} 个岗位</span><label className="button button-secondary import-button">导入并替换 JSON<input type="file" accept="application/json,.json" onChange={handleImport} /></label></div></header>
     {importMessage && <div className="import-message" role="status">{importMessage}</div>}
     <section className="hero" id="top"><div><p className="eyebrow">JOB LENS · DECISION WORKBENCH</p><h1>把值得投递的岗位，<em>筛出来。</em></h1><p className="hero-copy">证据、置信度、匹配理由与个人决策状态彼此分离；公开索引不会显示虚假分数。</p></div><div className="hero-stat"><strong>{filteredJobs.length}</strong><span>当前结果</span></div></section>
-    <section className="metric-row"><button className="metric metric-优先推荐" onClick={() => updateFilter("recommendation", "值得投递")}><strong>{recommendationOrder.filter((label) => worthwhileRecommendations.has(label)).reduce((total, label) => total + (counts[label] ?? 0), 0)}</strong><span>值得投递</span></button>{visibleRecommendationOrder.map((label) => <button key={label} className={`metric metric-${label}`} onClick={() => updateFilter("recommendation", label)}><strong>{counts[label] ?? 0}</strong><span>{label}</span></button>)}</section>
+    <section className="metric-row">{visibleRecommendationOrder.map((label) => <button key={label} className={`metric metric-${label}`} onClick={() => updateFilter("recommendation", label)}><strong>{counts[label] ?? 0}</strong><span>{label}</span></button>)}</section>
     <div className="workspace">
       <aside className={`filter-panel ${mobileFiltersOpen ? "is-open" : ""}`}><div className="panel-heading"><div><p className="eyebrow">FILTERS</p><h2>筛选岗位</h2></div><button className="close-filter" onClick={() => setMobileFiltersOpen(false)} aria-label="关闭筛选">×</button></div>
         <label className="field"><span>搜索岗位或公司</span><input value={filters.search} onChange={(event) => updateFilter("search", event.target.value)} placeholder="例如：增长、电商、字节" /></label>
-        <label className="field"><span>推荐结论</span><select value={filters.recommendation} onChange={(event) => updateFilter("recommendation", event.target.value as Filters["recommendation"])}><option>全部结论</option><option>值得投递</option>{visibleRecommendationOrder.map((label) => <option key={label}>{label}</option>)}</select></label>
+        <label className="field"><span>推荐结论</span><select value={filters.recommendation} onChange={(event) => updateFilter("recommendation", event.target.value as Filters["recommendation"])}><option>全部结论</option>{visibleRecommendationOrder.map((label) => <option key={label}>{label}</option>)}</select></label>
         <label className="field"><span>查看状态</span><select value={filters.userStatus} onChange={(event) => updateFilter("userStatus", event.target.value as Filters["userStatus"])}><option>全部状态</option>{visibleUserStatuses.map((status) => <option key={status}>{status}</option>)}</select></label>
         <label className="field"><span>产品方向</span><select value={filters.direction} onChange={(event) => updateFilter("direction", event.target.value)}>{directions.map((direction) => <option key={direction}>{direction}</option>)}</select></label>
         <label className="field"><span>最低匹配分：{filters.minimumScore || "不限"}</span><input type="range" min="0" max="100" step="5" value={filters.minimumScore} onChange={(event) => updateFilter("minimumScore", Number(event.target.value))} /></label>
