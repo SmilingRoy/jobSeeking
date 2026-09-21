@@ -37,6 +37,28 @@ test("strict import validates and really replaces the persisted dataset", () => 
   assert.ok(storage.getItem(DATASET_STORAGE_KEY));
 });
 
+test("new bundled revisions replace stale legacy storage without touching user state", () => {
+  const storage = new MemoryStorage();
+  storage.setItem(DATASET_STORAGE_KEY, JSON.stringify({
+    metadata: { direction_taxonomy_version: "product-directions-v1.0.0", updated_at: "2026-09-20T00:00:00Z", job_count: 1 },
+    jobs: [job()],
+  }));
+  const bundled = {
+    metadata: { direction_taxonomy_version: "product-directions-v2.0.0", updated_at: "2026-09-21T00:00:00Z", job_count: 1 },
+    jobs: [job({ id: "bundled-1", url: "https://www.zhipin.com/job_detail/bundled-1.html", directions: ["AI应用"] })],
+  };
+  updateUserState(storage, {}, "workbench-1", "已查看");
+  assert.equal(loadPersisted(storage, bundled).jobs[0].id, "bundled-1");
+  assert.equal(loadUserStates(storage)["workbench-1"], "已查看");
+});
+
+test("explicit imports stay authoritative across later bundled revisions", () => {
+  const storage = new MemoryStorage();
+  persistDataset(storage, { metadata: { direction_taxonomy_version: "custom" }, jobs: [job()] });
+  const bundled = { metadata: { direction_taxonomy_version: "product-directions-v2.0.0" }, jobs: [] };
+  assert.equal(loadPersisted(storage, bundled).jobs[0].id, "workbench-1");
+});
+
 test("invalid import cannot replace the previous dataset", () => {
   const storage = new MemoryStorage();
   persistDataset(storage, { jobs: [job()] });

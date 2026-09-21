@@ -1,4 +1,5 @@
 export const DATASET_STORAGE_KEY = "job-lens:dataset:v1";
+export const DATASET_SOURCE_STORAGE_KEY = "job-lens:dataset-source:v1";
 export const USER_STATE_STORAGE_KEY = "job-lens:user-state:v1";
 export const USER_STATUSES = ["未查看", "已查看", "候选", "已投递", "忽略"];
 
@@ -146,7 +147,21 @@ export function loadPersisted(storage, bundledPayload) {
   const fallback = validateAndNormalizePayload(bundledPayload);
   try {
     const saved = storage.getItem(DATASET_STORAGE_KEY);
-    return saved ? validateAndNormalizePayload(JSON.parse(saved)) : fallback;
+    if (!saved) return fallback;
+    const parsed = JSON.parse(saved);
+    const normalized = validateAndNormalizePayload(parsed);
+    const source = storage.getItem(DATASET_SOURCE_STORAGE_KEY);
+    // A deliberate JSON import should remain authoritative. Older versions did
+    // not record a source, so compare the bundle revision to migrate stale data
+    // that would otherwise keep masking newly deployed jobs and classifications.
+    if (source === "imported") return normalized;
+    const bundledMeta = fallback.metadata ?? {};
+    const savedMeta = normalized.metadata ?? {};
+    const hasBundleRevision = bundledMeta.direction_taxonomy_version || bundledMeta.updated_at || bundledMeta.job_count !== undefined;
+    const revisionChanged = (bundledMeta.direction_taxonomy_version && savedMeta.direction_taxonomy_version !== bundledMeta.direction_taxonomy_version)
+      || (bundledMeta.updated_at && savedMeta.updated_at !== bundledMeta.updated_at)
+      || (bundledMeta.job_count !== undefined && savedMeta.job_count !== bundledMeta.job_count);
+    return hasBundleRevision && revisionChanged ? fallback : normalized;
   } catch {
     return fallback;
   }
@@ -173,5 +188,6 @@ export function updateUserState(storage, current, jobId, status) {
 export function persistDataset(storage, payload) {
   const normalized = validateAndNormalizePayload(payload);
   storage.setItem(DATASET_STORAGE_KEY, JSON.stringify(normalized));
+  storage.setItem(DATASET_SOURCE_STORAGE_KEY, "imported");
   return normalized;
 }
