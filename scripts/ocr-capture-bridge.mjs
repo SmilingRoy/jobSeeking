@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import http from "node:http";
 import { join, resolve } from "node:path";
+import { readdir, readFile } from "node:fs/promises";
 import {
   DEFAULT_RUNS_DIR,
   atomicWriteJson,
@@ -69,6 +70,17 @@ const server = http.createServer(async (request, response) => {
       const input = await body(request);
       const run = await createRun(runsRoot, input.run_id);
       return send(response, 201, { run_id: run.runId, manifest: run.manifest });
+    }
+    if (request.method === "POST" && url.pathname === "/runs/seen") {
+      const urls = new Set();
+      for (const entry of await readdir(runsRoot, { withFileTypes: true })) {
+        if (!entry.isDirectory()) continue;
+        try {
+          const manifest = JSON.parse(await readFile(join(runsRoot, entry.name, "manifest.json"), "utf8"));
+          for (const job of manifest.jobs || []) if (job.url) urls.add(job.url);
+        } catch { /* ignore incomplete run directories */ }
+      }
+      return send(response, 200, { urls: [...urls] });
     }
     const match = url.pathname.match(/^\/runs\/([^/]+)\/(job|finalize)$/);
     if (!match) return send(response, 404, { error: "not_found" });

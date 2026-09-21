@@ -3,6 +3,11 @@ let running = false;
 let activeRunId = null;
 const COOL_DOWN_EVERY = 40;
 const CHECKPOINT_KEY = "ocr_capture_checkpoint";
+const GLOBAL_SEEN_KEY = "ocr_capture_seen_urls";
+const BATCH_SIZE_MIN = 2;
+const BATCH_SIZE_MAX = 4;
+const BATCH_PAUSE_MIN = 8000;
+const BATCH_PAUSE_MAX = 15000;
 
 async function loadCheckpoint() {
   const value = await chrome.storage.local.get(CHECKPOINT_KEY);
@@ -15,6 +20,15 @@ async function saveCheckpoint(value) {
 
 async function clearCheckpoint() {
   await chrome.storage.local.remove(CHECKPOINT_KEY);
+}
+
+async function loadGlobalSeen() {
+  const value = await chrome.storage.local.get(GLOBAL_SEEN_KEY);
+  return new Set(Array.isArray(value[GLOBAL_SEEN_KEY]) ? value[GLOBAL_SEEN_KEY] : []);
+}
+
+async function saveGlobalSeen(seen) {
+  await chrome.storage.local.set({ [GLOBAL_SEEN_KEY]: [...seen].slice(-10000) });
 }
 
 async function post(path, payload) {
@@ -31,6 +45,10 @@ async function report(status) {
 function delay(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
 function randomDelay(min, max) {
   return delay(Math.floor(min + Math.random() * (max - min + 1)));
+}
+
+function randomInt(min, max) {
+  return Math.floor(min + Math.random() * (max - min + 1));
 }
 
 async function sendTab(tabId, message) {
@@ -88,11 +106,19 @@ async function waitForTab(tabId, url) {
 async function collect(tab, limit, resume = null) {
   const run = await post("/runs", resume?.run_id ? { run_id: resume.run_id } : {});
   activeRunId = run.run_id;
-  const seen = new Set(Array.isArray(resume?.seen) ? resume.seen : []);
+  const persistedSeen = resume ? [] : await post("/runs/seen", {}).catch(() => ({ urls: [] }));
+  const seen = new Set([
+    ...(Array.isArray(persistedSeen) ? persistedSeen : persistedSeen.urls || []),
+    ...(Array.isArray(resume?.seen) ? resume.seen : []),
+  ]);
   let sequence = Number(resume?.sequence) || 0;
   await report({ phase: "collecting", target: limit, count: sequence, message: resume ? `已从断点恢复，继续采集（已完成 ${sequence} 个）` : "已开始采集" });
   let hasNext = true;
   let previousPageKey = "";
+  let batchSize = randomInt(BATCH_SIZE_MIN, BATCH_SIZE_MAX);
+  let batchCount = 0;
+  let batchNumber = 1;
+  await report({ phase: "collecting", target: limit, count: sequence, batch: batchNumber, batch_size: batchSize, message: `第 ${batchNumber} 批开始，计划采集 ${batchSize} 个岗位` });
   await saveCheckpoint({
     version: 1,
     phase: "collecting",
@@ -113,6 +139,7 @@ async function collect(tab, limit, resume = null) {
     for (const item of jobs) {
       if (!running || (limit && sequence >= limit)) break;
       seen.add(item.url);
+      await saveGlobalSeen(seen);
       sequence += 1;
       const job = { ...item, sequence, capture_status: "card_captured", page_state: "search_result" };
       try {
@@ -157,6 +184,15 @@ async function collect(tab, limit, resume = null) {
           await randomDelay(20000, 35000);
         } else {
           await randomDelay(4000, 8000);
+        }
+        batchCount += 1;
+        if (batchCount >= batchSize && running && (!limit || sequence < limit)) {
+          batchNumber += 1;
+          batchCount = 0;
+          batchSize = randomInt(BATCH_SIZE_MIN, BATCH_SIZE_MAX);
+          await report({ phase: "batch_pause", target: limit, count: sequence, batch: batchNumber - 1, batch_size: batchSize, message: `第 ${batchNumber - 1} 批完成，短暂等待后继续` });
+          await randomDelay(BATCH_PAUSE_MIN, BATCH_PAUSE_MAX);
+          await report({ phase: "collecting", target: limit, count: sequence, batch: batchNumber, batch_size: batchSize, message: `第 ${batchNumber} 批开始，计划采集 ${batchSize} 个岗位` });
         }
       }
     }
@@ -220,11 +256,27 @@ pollControl();
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === "start") {
+    if (running) {
+      sendResponse({ ok: false, error: "采集已经在运行" });
+      return false;
+    }
     running = true;
-    chrome.tabs.query({ active: true, currentWindow: true }).then(([tab]) => collect(tab, Number(message.limit) || 10))
-      .then((run) => { running = false; sendResponse({ ok: true, run }); })
-      .catch((error) => { running = false; sendResponse({ ok: false, error: error.message }); });
-    return true;
+    chrome.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
+      if (!tab?.url?.includes("zhipin.com")) throw new Error("当前活动页不是 BOSS 岗位列表");
+      collect(tab, Number(message.limit) || 0).catch(async (error) => {
+        running = false;
+        await report({ active: false, phase: "error", message: error.message });
+      });
+    }).catch(async (error) => {
+      running = false;
+      await report({ active: false, phase: "error", message: error.message });
+    });
+    sendResponse({ ok: true, started: true });
+    return false;
   }
   if (message.type === "stop") { running = false; sendResponse({ ok: true }); }
+  if (message.type === "status") {
+    fetch(`${BRIDGE}/commands/status`).then((response) => response.json()).then((value) => sendResponse(value)).catch((error) => sendResponse({ active: false, phase: "error", message: error.message }));
+    return true;
+  }
 });

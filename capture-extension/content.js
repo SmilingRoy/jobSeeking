@@ -60,6 +60,53 @@ function clickJob(link) {
   link.click();
 }
 
+function listScroller() {
+  const candidates = [...document.querySelectorAll("*")].filter((element) => {
+    const rect = element.getBoundingClientRect();
+    return rect.left < window.innerWidth * 0.62
+      && rect.width > 260
+      && rect.height > 260
+      && element.scrollHeight > element.clientHeight + 100
+      && element.querySelectorAll('a[href*="/job_detail/"]').length >= 3;
+  });
+  return candidates.sort((left, right) => {
+    const leftLinks = left.querySelectorAll('a[href*="/job_detail/"]').length;
+    const rightLinks = right.querySelectorAll('a[href*="/job_detail/"]').length;
+    return rightLinks - leftLinks || (right.scrollHeight - right.clientHeight) - (left.scrollHeight - left.clientHeight);
+  })[0] || (location.pathname === "/web/geek/jobs" ? document.scrollingElement : null);
+}
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function advanceList() {
+  const candidates = [...document.querySelectorAll("a,button")];
+  const next = candidates.find((item) => /下一页|下一頁|next/i.test((item.innerText || item.getAttribute("aria-label") || "").trim()) && !item.disabled);
+  if (next) {
+    next.click();
+    return { ok: true, mode: "button" };
+  }
+
+  const before = new Set(collectJobs().map((job) => job.url));
+  const scroller = listScroller();
+  if (!scroller) return { ok: false, reason: "list_scroller_not_found" };
+  let moved = false;
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    const beforeTop = scroller === document.scrollingElement ? window.scrollY : scroller.scrollTop;
+    const step = Math.max((scroller.clientHeight || window.innerHeight) * 0.78, 420);
+    if (scroller === document.scrollingElement) window.scrollBy({ top: step, behavior: "instant" });
+    else scroller.scrollTop = Math.min(beforeTop + step, scroller.scrollHeight - scroller.clientHeight);
+    await wait(1100 + attempt * 250);
+    const afterTop = scroller === document.scrollingElement ? window.scrollY : scroller.scrollTop;
+    moved = moved || afterTop > beforeTop + 4;
+    const added = collectJobs().some((job) => !before.has(job.url));
+    if (added) return { ok: true, mode: "list_scroll", moved: true, added: true, attempt: attempt + 1 };
+    if (afterTop <= beforeTop + 4) break;
+  }
+  return moved ? { ok: true, mode: "list_scroll", moved: true, added: false } : { ok: false, reason: "list_end" };
+}
+
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === "collect_jobs") sendResponse({ jobs: collectJobs(), page_url: location.href });
   else if (message.type === "page_state") sendResponse({ state: pageState(), title: document.title });
@@ -112,12 +159,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (scroller) scroller.scrollTop = 0;
     sendResponse({ ok: true });
   }
-  else if (message.type === "next_page") {
-    const candidates = [...document.querySelectorAll("a,button")];
-    const next = candidates.find((item) => /下一页|下一頁|next/i.test((item.innerText || item.getAttribute("aria-label") || "").trim()) && !item.disabled);
-    if (!next) sendResponse({ ok: false });
-    else { next.click(); sendResponse({ ok: true }); }
-  }
+  else if (message.type === "next_page") advanceList().then(sendResponse);
   else if (message.type === "navigate") { location.href = message.url; sendResponse({ ok: true }); }
   return true;
 });
