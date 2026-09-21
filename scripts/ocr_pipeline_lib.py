@@ -8,6 +8,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from product_directions import infer_product_directions
+
 UNKNOWN = "unknown"
 COMPLETE_CAPTURE_STATUSES = {"captured", "detail_captured", "list_detail_captured"}
 REVIEW_CAPTURE_STATUSES = {
@@ -73,21 +75,7 @@ def first_match(pattern: str, text: str) -> str:
 
 
 def infer_direction(title: str, text: str) -> list[str]:
-    rules = [
-        ("用户增长", ["增长", "用户购买", "转化", "留存"]),
-        ("用户产品", ["C端", "用户产品", "用户体验"]),
-        ("交易", ["交易", "订单", "购物", "电商"]),
-        ("履约", ["履约", "物流", "供应链"]),
-        ("本地生活", ["本地生活"]),
-        ("LBS", ["地图", "LBS"]),
-        ("出行", ["出行", "打车", "酒旅"]),
-        ("AI应用", ["AI", "Agent", "大模型"]),
-        ("策略", ["策略", "搜索", "推荐"]),
-        ("数据产品", ["数据产品", "数字化"]),
-        ("B端产品", ["B端", "商家服务", "后台", "平台运营"]),
-    ]
-    evidence = f"{title} {text}".lower()
-    return [label for label, variants in rules if any(value.lower() in evidence for value in variants)]
+    return infer_product_directions(title, text)
 
 
 def split_jd(detail_text: str) -> tuple[str, str]:
