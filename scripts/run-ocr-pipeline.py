@@ -10,7 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SCORER = ROOT / "scripts/score_jobs.py"
-DEFAULT_SCORING_CONFIG = ROOT / "config/job-scoring.json"
+DEFAULT_SCORING_CONFIG = ROOT / "config/matching-v2/scoring-algorithm.json"
 
 
 def main() -> None:

@@ -1,4 +1,5 @@
-import scoringConfig from "../../config/job-scoring.json" with { type: "json" };
+import scoringConfig from "../../config/matching-v2/scoring-algorithm.json" with { type: "json" };
+import preferences from "../../config/matching-v2/preferences.shanghai-pm.json" with { type: "json" };
 import { isUnknown, normalizeSiteJobRecord } from "./site-job-contract.mjs";
 
 const HIGH_RECOMMENDATIONS = new Set(["优先推荐", "可以考虑"]);
@@ -11,18 +12,16 @@ export function assertValidScoringConfig(config) {
     || config.confidence_floor_for_recommendation > 1) {
     throw new Error("scoring config.confidence_floor_for_recommendation 必须在 0-1");
   }
-  if (!config.weights || typeof config.weights !== "object" || !Object.keys(config.weights).length) {
-    throw new Error("scoring config.weights 必须是非空对象");
+  if (!config.dimensions || typeof config.dimensions !== "object" || !Object.keys(config.dimensions).length) {
+    throw new Error("scoring config.dimensions 必须是非空对象");
   }
-  for (const [dimension, weight] of Object.entries(config.weights)) {
-    if (!Number.isFinite(weight) || weight <= 0) throw new Error(`scoring config.weights.${dimension} 必须是正数`);
-    const values = config.values?.[dimension];
+  for (const [dimension, values] of Object.entries(config.dimensions)) {
     if (!values || typeof values !== "object" || !("unknown" in values) || values.unknown !== null) {
-      throw new Error(`scoring config.values.${dimension}.unknown 必须显式为 null`);
+      throw new Error(`scoring config.dimensions.${dimension}.unknown 必须显式为 null`);
     }
     for (const [classification, factor] of Object.entries(values)) {
       if (factor !== null && (!Number.isFinite(factor) || factor < 0 || factor > 1)) {
-        throw new Error(`scoring config.values.${dimension}.${classification} 必须在 0-1 或为 null`);
+        throw new Error(`scoring config.dimensions.${dimension}.${classification} 必须在 0-1 或为 null`);
       }
     }
   }
@@ -44,9 +43,21 @@ function unique(values) {
   return [...new Set(values.filter((value) => value != null && value !== ""))];
 }
 
+const NON_BLOCKING_INFORMATION_DIMENSIONS = new Set([
+  "financing_fit", "company_quality", "freshness_fit", "team_quality",
+]);
+
+function suppliedOrInferred(supplied, inferred) {
+  return Object.fromEntries(Object.entries(inferred).map(([key, value]) => {
+    const candidate = supplied[key];
+    return [key, candidate != null && candidate !== "" && candidate !== "unknown" ? candidate : value];
+  }));
+}
+
 function inferEvaluation(job) {
   const supplied = job.evaluation && typeof job.evaluation === "object" ? job.evaluation : {};
-  const text = [job.title, job.description, job.job_description_raw, job.responsibilities, job.requirements]
+  const directions = Array.isArray(job.directions) ? job.directions : [];
+  const text = [job.title, job.company, job.description, job.job_description_raw, job.responsibilities, job.requirements, ...directions]
     .filter((value) => !isUnknown(value))
     .join(" ");
   const responsibilityGroups = [
@@ -58,23 +69,32 @@ function inferEvaluation(job) {
   ];
   const responsibilityCategories = responsibilityGroups.filter((group) => group.some((word) => text.includes(word))).length;
   const hasDeliveryLoop = ["上线", "落地", "迭代", "验证"].some((word) => text.includes(word));
+  const priority = preferences.priority_directions ?? [];
+  const adjacent = preferences.adjacent_directions ?? [];
+  const excluded = preferences.excluded_directions ?? [];
+  const bSide = ["B端", "企业SaaS", "商家后台", "内部系统", "中后台"].some((word) => text.includes(word));
+  const cSide = ["C端", "用户端", "App", "小程序", "消费者"].some((word) => text.includes(word));
   const inferred = {
     title_fit: String(job.title ?? "").includes("产品经理") ? "preferred" : "unknown",
     city_fit: job.city === "上海" ? "match" : (isUnknown(job.city) ? "unknown" : "mismatch"),
-    direction_fit: "unknown",
+    direction_fit: excluded.some((word) => text.includes(word)) ? "excluded"
+      : (directions.some((value) => priority.includes(value)) || priority.some((word) => text.includes(word)) ? "priority"
+        : (directions.some((value) => adjacent.includes(value)) || adjacent.some((word) => text.includes(word)) ? "adjacent" : "unknown")),
     responsibility_fit: responsibilityCategories >= 2 && hasDeliveryLoop ? "high" : (responsibilityCategories ? "medium" : "unknown"),
-    product_form_fit: "unknown",
-    product_layer_fit: "unknown",
+    product_form_fit: cSide ? "priority" : (bSide ? "conditional" : "unknown"),
+    product_layer_fit: text.includes("核心链路") || text.includes("交易链路") ? "priority" : (bSide ? "conditional" : "unknown"),
     role_fit: String(job.title ?? "").includes("产品经理") ? "preferred" : "unknown",
-    experience_fit: "unknown",
+    experience_fit: isUnknown(job.workExperience) ? "unknown" : "medium",
     company_quality: "unknown",
     team_quality: "unknown",
     growth_value: "unknown",
     freshness_fit: "unknown",
     mandatory_requirement_fit: isUnknown(job.requirements) ? "unknown" : "match",
     work_mode_fit: job.city === "上海" ? "match" : "unknown",
+    risk_fit: "clear",
   };
-  return { ...inferred, ...supplied };
+  if (inferred.direction_fit === "priority") inferred.growth_value = "medium";
+  return suppliedOrInferred(supplied, inferred);
 }
 
 function hardFilterReasons(job, evaluation, config) {
@@ -111,14 +131,18 @@ export function scoreJob(job, config = scoringConfig) {
   const evaluation = inferEvaluation(job);
   const components = [];
   let knownWeight = 0;
+  let knownRequiredWeight = 0;
   let earnedPoints = 0;
-  const totalWeight = Object.values(config.weights).reduce((sum, weight) => sum + weight, 0);
-  for (const [dimension, weight] of Object.entries(config.weights)) {
+  const requiredWeight = Object.entries(preferences.weights)
+    .filter(([dimension]) => !NON_BLOCKING_INFORMATION_DIMENSIONS.has(dimension))
+    .reduce((sum, [, weight]) => sum + weight, 0);
+  for (const [dimension, weight] of Object.entries(preferences.weights)) {
     const classification = evaluation[dimension] ?? "unknown";
-    const factor = config.values[dimension]?.[classification] ?? null;
+    const factor = config.dimensions[dimension]?.[classification] ?? null;
     const known = factor !== null;
     if (known) {
       knownWeight += weight;
+      if (!NON_BLOCKING_INFORMATION_DIMENSIONS.has(dimension)) knownRequiredWeight += weight;
       earnedPoints += weight * factor;
     }
     components.push({
@@ -133,7 +157,7 @@ export function scoreJob(job, config = scoringConfig) {
   const responsibilityText = job.responsibilities ?? job.responsibility_summary;
   const completeJd = !isUnknown(job.job_description_raw) && !isUnknown(responsibilityText);
   const captureFactor = job.verification_status === "captured_jd" && completeJd ? 1 : 0.55;
-  const evidenceConfidence = Number(((knownWeight / totalWeight) * captureFactor).toFixed(3));
+  const evidenceConfidence = Number(((knownRequiredWeight / requiredWeight) * captureFactor).toFixed(3));
   const matchScore = knownWeight ? Number(((earnedPoints / knownWeight) * 100).toFixed(1)) : null;
   const hardReasons = hardFilterReasons(job, evaluation, config);
   let recommendation = "信息不足";
@@ -143,6 +167,9 @@ export function scoreJob(job, config = scoringConfig) {
     else if (matchScore >= config.thresholds.consider) recommendation = "可以考虑";
     else if (matchScore >= config.thresholds.review) recommendation = "谨慎评估";
     else recommendation = "不推荐";
+  }
+  if (evidenceConfidence < config.confidence_floor_for_recommendation && recommendation === "优先推荐") {
+    recommendation = "可以考虑";
   }
   if (job.verification_status === "needs_review" && HIGH_RECOMMENDATIONS.has(recommendation)) recommendation = "信息不足";
 
@@ -159,7 +186,7 @@ export function scoreJob(job, config = scoringConfig) {
     missing_information: unique([
       ...(Array.isArray(job.missing_information) ? job.missing_information : [])
         .filter((item) => item !== "完整JD或职责证据" || !completeJd),
-      ...components.filter((component) => !component.known).map((component) => component.dimension),
+    ...components.filter((component) => !component.known && !NON_BLOCKING_INFORMATION_DIMENSIONS.has(component.dimension)).map((component) => component.dimension),
       ...(!completeJd ? ["完整JD或职责证据"] : []),
     ]),
   };

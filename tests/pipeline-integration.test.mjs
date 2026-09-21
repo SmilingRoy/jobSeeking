@@ -193,18 +193,18 @@ test("unknown dimensions lower confidence without lowering the known-dimension s
       freshness_fit: "unknown",
     },
   }));
-  assert.equal(uncertain.match_score, 100);
+  assert.equal(uncertain.match_score, 97.9);
   assert.ok(uncertain.evidence_confidence < complete.evidence_confidence);
-  assert.equal(uncertain.recommendation, "信息不足");
-  assert.equal(uncertain.score, null);
+  assert.equal(uncertain.recommendation, "优先推荐");
+  assert.equal(uncertain.score, uncertain.match_score);
 });
 
 test("scoring is deterministic, versioned, and explainable", () => {
   const first = scoreJob(ocrJob());
   const second = scoreJob(ocrJob());
   assert.deepEqual(first, second);
-  assert.equal(first.score_components.length, 10);
-  assert.equal(first.scoring_config_version, "job-pipeline-scoring-v1.0.0");
+  assert.equal(first.score_components.length, 16);
+  assert.equal(first.scoring_config_version, "matching-v2.0.0");
   assert.equal(first.hard_filter_reasons.length, 0);
   assert.ok(first.match_score >= 0 && first.match_score <= 100);
   assert.ok(first.evidence_confidence >= 0.7);

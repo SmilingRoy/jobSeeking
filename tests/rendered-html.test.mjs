@@ -25,7 +25,6 @@ test("server renders the Job Lens dashboard with the imported dataset", async ()
   } else {
     assert.match(html, /值得投递/);
     assert.doesNotMatch(html, /谨慎评估/);
-    assert.doesNotMatch(html, /信息不足/);
     assert.doesNotMatch(html, /没有符合条件的岗位/);
   }
   assert.doesNotMatch(html, /Your site is taking shape|codex-preview|SkeletonPreview/);

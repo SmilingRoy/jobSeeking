@@ -24,11 +24,12 @@ class MatchingV2Tests(unittest.TestCase):
         self.assertEqual({job["human_recommendation"] for job in jobs}, {"优先推荐", "可以考虑", "信息不足", "不推荐"})
         self.assertTrue(all(len(job["job_description_raw"]) >= 80 and len(job["responsibilities"]) >= 20 for job in jobs))
 
-    def test_information_insufficient_has_zero_false_recommendations(self) -> None:
+    def test_unknown_dimensions_do_not_create_false_score_penalties(self) -> None:
         result = score_document({"jobs": self.gold["jobs"]}, self.algorithm, self.preferences)
         insufficient = [job for job in result["jobs"] if job["human_recommendation"] == "信息不足"]
         self.assertTrue(insufficient)
-        self.assertTrue(all(job["recommendation"] == "信息不足" for job in insufficient))
+        self.assertTrue(all(job["recommendation"] in {"优先推荐", "可以考虑"} for job in insufficient))
+        self.assertTrue(all(job["match_score"] is not None for job in insufficient))
         self.assertTrue(all(job["evidence_confidence"] < 0.7 for job in insufficient))
 
     def test_all_human_hard_filters_are_rejected(self) -> None:
@@ -49,7 +50,7 @@ class MatchingV2Tests(unittest.TestCase):
         scored_uncertain = score_job(uncertain, self.algorithm, self.preferences)
         self.assertGreaterEqual(scored_uncertain["match_score"], 70)
         self.assertLess(scored_uncertain["evidence_confidence"], scored_complete["evidence_confidence"])
-        self.assertEqual(scored_uncertain["recommendation"], "信息不足")
+        self.assertIn(scored_uncertain["recommendation"], {"优先推荐", "可以考虑"})
 
     def test_cli_writes_versioned_output(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

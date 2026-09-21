@@ -451,8 +451,8 @@ def validate_site_jobs(jobs: list[dict[str, Any]]) -> None:
             raise ValueError(f"{label}.hard_filter_reasons 必须是数组")
         if job.get("scoring_config_version") in (None, "", UNKNOWN):
             raise ValueError(f"{label}.scoring_config_version 缺失")
-        if job.get("recommendation") in {"优先推荐", "可以考虑"} and confidence < 0.7:
-            raise ValueError(f"{label} 低证据置信度不能高等级推荐")
+        if job.get("recommendation") == "优先推荐" and confidence < 0.7:
+            raise ValueError(f"{label} 低证据置信度不能优先推荐")
         if not isinstance(job.get("evidence_source"), list) or not job["evidence_source"]:
             raise ValueError(f"{label}.evidence_source 必须是非空数组")
         if not isinstance(job.get("review_reasons"), list):

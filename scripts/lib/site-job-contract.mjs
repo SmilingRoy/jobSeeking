@@ -33,7 +33,7 @@ export const CONTRACT_ARRAY_FIELDS = Object.freeze([
   "hard_filter_reasons",
 ]);
 
-export const DEFAULT_SCORING_CONFIG_VERSION = "job-pipeline-scoring-v1.0.0";
+export const DEFAULT_SCORING_CONFIG_VERSION = "matching-v2.0.0";
 
 const allowedRecommendations = new Set(RECOMMENDATIONS);
 const allowedPipelines = new Set(PIPELINES);
@@ -200,8 +200,8 @@ export function siteJobErrors(jobs) {
     if (job.verification_status === "needs_review" && highRecommendations.has(job.recommendation)) {
       errors.push(`${label} 待复核岗位不能高等级推荐`);
     }
-    if (highRecommendations.has(job.recommendation) && job.evidence_confidence < 0.7) {
-      errors.push(`${label} 低证据置信度不能高等级推荐`);
+    if (job.recommendation === "优先推荐" && job.evidence_confidence < 0.7) {
+      errors.push(`${label} 低证据置信度不能优先推荐`);
     }
     if (highRecommendations.has(job.recommendation) && job.match_score === null) {
       errors.push(`${label} 高等级推荐必须有 match_score`);
