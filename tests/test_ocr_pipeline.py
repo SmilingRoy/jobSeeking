@@ -68,7 +68,7 @@ class OcrPipelineTests(unittest.TestCase):
         self.assertEqual(good["job_status"], "open")
         self.assertEqual(good["company_name"], "某互联网科技公司")
         self.assertIn("推动版本迭代上线", good["responsibility_summary"])
-        self.assertEqual(good["evaluation"]["responsibility_fit"], "high")
+        self.assertEqual(good["evaluation"]["responsibility_fit"], "medium")
         self.assertEqual(unsafe["verification_status"], "needs_review")
         self.assertIn("capture_status=detail_unchanged", unsafe["review_reasons"])
         self.assertTrue(any(item.get("job_id") == "fixture-review" for item in review))

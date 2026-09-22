@@ -4,7 +4,7 @@
     "pipeline": "ocr_jd",
     "job_count": 159,
     "updated_at": "2026-09-22T07:07:32.869Z",
-    "scoring_algorithm_version": "matching-v2.0.0",
+    "scoring_algorithm_version": "matching-v2.1.0",
     "preference_version": "shanghai-pm-preferences-v1.0.0",
     "direction_taxonomy_version": "product-directions-v2.0.0",
     "direction_counts": {
@@ -20,6 +20,35 @@
       "本地生活": 2,
       "出行": 4,
       "数据产品": 2
+    },
+    "rescored_at": "2026-09-22T07:28:40.721Z",
+    "recommendation_counts": {
+      "可以考虑": 122,
+      "优先推荐": 36,
+      "不推荐": 1
+    },
+    "score_counts": {
+      "83": 1,
+      "89": 2,
+      "90": 1,
+      "90.5": 2,
+      "87.5": 11,
+      "85.1": 20,
+      "92.5": 9,
+      "92.7": 64,
+      "84.6": 3,
+      "96.1": 25,
+      "85.8": 2,
+      "96.5": 9,
+      "88.6": 1,
+      "89.5": 1,
+      "88.4": 1,
+      "88.9": 1,
+      "94.3": 2,
+      "94.6": 1,
+      "95.9": 1,
+      "96.3": 1,
+      "76.5": 1
     }
   },
   "jobs": [
@@ -52,7 +81,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T03:35:31.492Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 90.5,
       "match_score": 90.5,
       "evidence_confidence": 0.762,
@@ -171,7 +200,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -243,7 +272,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-21T12:26:04.691Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 87.5,
       "match_score": 87.5,
       "evidence_confidence": 0.893,
@@ -362,7 +391,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -444,7 +473,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T05:05:44.525Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 85.1,
       "match_score": 85.1,
       "evidence_confidence": 1,
@@ -563,7 +592,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -632,7 +661,7 @@
         "LBS"
       ],
       "collected_at": "2026-09-21T12:14:48.029Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 85.1,
       "match_score": 85.1,
       "evidence_confidence": 1,
@@ -751,7 +780,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -823,7 +852,7 @@
         "B端产品"
       ],
       "collected_at": "2026-09-15T03:05:27.808Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 85.1,
       "match_score": 85.1,
       "evidence_confidence": 1,
@@ -942,7 +971,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -1029,7 +1058,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-15T02:59:07.659Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.5,
       "match_score": 92.5,
       "evidence_confidence": 0.964,
@@ -1148,7 +1177,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -1233,7 +1262,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T03:43:41.664Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.5,
       "match_score": 92.5,
       "evidence_confidence": 0.964,
@@ -1352,7 +1381,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -1427,7 +1456,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-21T12:27:58.102Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -1546,7 +1575,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -1629,7 +1658,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T03:58:57.383Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -1748,7 +1777,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -1935,7 +1964,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -2020,7 +2049,7 @@
         "本地生活"
       ],
       "collected_at": "2026-09-21T13:38:04.716Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -2139,7 +2168,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -2348,7 +2377,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -2421,7 +2450,7 @@
         "交易"
       ],
       "collected_at": "2026-09-22T03:49:01.747Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -2540,7 +2569,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -2612,7 +2641,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-21T12:14:30.223Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -2731,7 +2760,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -2922,7 +2951,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -3007,7 +3036,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T02:21:34.357Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 85.1,
       "match_score": 85.1,
       "evidence_confidence": 1,
@@ -3126,7 +3155,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -3227,7 +3256,7 @@
         "B端产品"
       ],
       "collected_at": "2026-09-21T13:36:12.282Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 89,
       "match_score": 89,
       "evidence_confidence": 1,
@@ -3346,7 +3375,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -3438,7 +3467,7 @@
         "B端产品"
       ],
       "collected_at": "2026-09-21T13:40:15.151Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -3557,7 +3586,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -3645,7 +3674,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-21T13:37:24.381Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -3764,7 +3793,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -3852,7 +3881,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T03:31:59.099Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -3971,7 +4000,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -4066,7 +4095,7 @@
         "交易"
       ],
       "collected_at": "2026-09-22T03:29:36.036Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -4185,7 +4214,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -4260,7 +4289,7 @@
         "用户增长"
       ],
       "collected_at": "2026-09-22T02:42:38.499Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -4379,7 +4408,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -4570,7 +4599,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -4640,7 +4669,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T03:30:35.144Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.5,
       "match_score": 92.5,
       "evidence_confidence": 0.964,
@@ -4759,7 +4788,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -4949,7 +4978,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -5024,7 +5053,7 @@
         "B端产品"
       ],
       "collected_at": "2026-09-21T12:42:55.452Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 85.1,
       "match_score": 85.1,
       "evidence_confidence": 1,
@@ -5143,7 +5172,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -5225,7 +5254,7 @@
         "履约"
       ],
       "collected_at": "2026-09-22T03:43:00.232Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -5344,7 +5373,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -5535,7 +5564,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -5618,7 +5647,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T03:59:11.443Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 85.1,
       "match_score": 85.1,
       "evidence_confidence": 1,
@@ -5737,7 +5766,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -5805,7 +5834,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T03:57:11.543Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -5924,7 +5953,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -5992,7 +6021,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T03:35:15.649Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -6111,7 +6140,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -6179,7 +6208,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T03:43:58.577Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 85.1,
       "match_score": 85.1,
       "evidence_confidence": 1,
@@ -6298,7 +6327,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -6366,7 +6395,7 @@
         "内容产品"
       ],
       "collected_at": "2026-09-22T05:08:32.788Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -6485,7 +6514,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -6682,7 +6711,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -6752,7 +6781,7 @@
         "出行"
       ],
       "collected_at": "2026-09-21T13:39:34.434Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -6871,7 +6900,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -6959,7 +6988,7 @@
         "AI应用"
       ],
       "collected_at": "2026-09-22T03:42:04.174Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 88.6,
       "match_score": 88.6,
       "evidence_confidence": 0.917,
@@ -7078,7 +7107,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -7150,7 +7179,7 @@
         "用户增长"
       ],
       "collected_at": "2026-09-21T12:54:24.697Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -7269,7 +7298,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -7471,7 +7500,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -7566,7 +7595,7 @@
         "策略"
       ],
       "collected_at": "2026-09-22T04:00:56.559Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 88.4,
       "match_score": 88.4,
       "evidence_confidence": 0.964,
@@ -7685,7 +7714,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -7763,7 +7792,7 @@
         "内容产品"
       ],
       "collected_at": "2026-09-22T03:36:30.700Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -7882,7 +7911,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -8080,7 +8109,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -8152,7 +8181,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-21T12:53:08.278Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -8271,7 +8300,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -8360,7 +8389,7 @@
         "B端产品"
       ],
       "collected_at": "2026-09-22T02:41:28.984Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -8479,7 +8508,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -8569,7 +8598,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-15T02:59:37.445Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -8688,7 +8717,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -8769,7 +8798,7 @@
         "用户增长"
       ],
       "collected_at": "2026-09-22T04:02:10.920Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -8888,7 +8917,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -8967,7 +8996,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-21T12:28:42.286Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -9086,7 +9115,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -9290,7 +9319,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -9375,7 +9404,7 @@
         "策略"
       ],
       "collected_at": "2026-09-22T05:06:58.767Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -9494,7 +9523,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -9707,7 +9736,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -9783,7 +9812,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-15T03:05:41.182Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -9902,7 +9931,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -9985,7 +10014,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T01:28:52.281Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 87.5,
       "match_score": 87.5,
       "evidence_confidence": 0.893,
@@ -10104,7 +10133,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -10311,7 +10340,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -10392,7 +10421,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-21T12:39:40.806Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 85.1,
       "match_score": 85.1,
       "evidence_confidence": 1,
@@ -10511,7 +10540,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -10592,7 +10621,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T03:35:46.766Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -10711,7 +10740,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -10786,7 +10815,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T04:57:33.740Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -10905,7 +10934,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -11103,7 +11132,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -11185,7 +11214,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T05:01:52.202Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 87.5,
       "match_score": 87.5,
       "evidence_confidence": 0.893,
@@ -11304,7 +11333,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -11375,7 +11404,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T02:39:34.802Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -11494,7 +11523,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -11564,7 +11593,7 @@
         "出行"
       ],
       "collected_at": "2026-09-21T12:25:49.187Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 87.5,
       "match_score": 87.5,
       "evidence_confidence": 0.893,
@@ -11683,7 +11712,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -11884,7 +11913,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -11963,7 +11992,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-21T12:31:47.272Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 88.9,
       "match_score": 88.9,
       "evidence_confidence": 1,
@@ -12082,7 +12111,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -12166,7 +12195,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T04:53:53.743Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -12285,7 +12314,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -12475,7 +12504,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -12688,7 +12717,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -12770,7 +12799,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T04:55:48.606Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 87.5,
       "match_score": 87.5,
       "evidence_confidence": 0.893,
@@ -12889,7 +12918,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -12966,7 +12995,7 @@
         "策略"
       ],
       "collected_at": "2026-09-21T12:25:01.001Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.5,
       "match_score": 92.5,
       "evidence_confidence": 0.964,
@@ -13085,7 +13114,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -13287,7 +13316,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -13360,7 +13389,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T01:28:01.120Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.5,
       "match_score": 92.5,
       "evidence_confidence": 0.964,
@@ -13479,7 +13508,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -13569,7 +13598,7 @@
         "策略"
       ],
       "collected_at": "2026-09-21T12:48:26.494Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 0.786,
@@ -13688,7 +13717,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -13890,7 +13919,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -13968,7 +13997,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-15T03:07:15.877Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -14087,7 +14116,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -14173,7 +14202,7 @@
         "B端产品"
       ],
       "collected_at": "2026-09-22T03:45:39.552Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 89,
       "match_score": 89,
       "evidence_confidence": 1,
@@ -14292,7 +14321,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -14360,7 +14389,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T04:59:10.516Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -14479,7 +14508,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -14677,7 +14706,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -14881,7 +14910,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -15089,7 +15118,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -15172,7 +15201,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T02:46:58.265Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 85.1,
       "match_score": 85.1,
       "evidence_confidence": 1,
@@ -15291,7 +15320,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -15500,7 +15529,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -15571,7 +15600,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T03:40:18.197Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -15690,7 +15719,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -15765,7 +15794,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-21T12:32:22.910Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -15884,7 +15913,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -15965,7 +15994,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T03:50:24.372Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -16084,7 +16113,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -16160,7 +16189,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-21T13:30:09.946Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -16279,7 +16308,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -16369,7 +16398,7 @@
         "B端产品"
       ],
       "collected_at": "2026-09-22T04:02:34.618Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 0.786,
@@ -16488,7 +16517,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -16559,7 +16588,7 @@
         "交易"
       ],
       "collected_at": "2026-09-22T05:08:02.639Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -16678,7 +16707,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -16747,7 +16776,7 @@
         "用户增长"
       ],
       "collected_at": "2026-09-22T02:33:32.014Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -16866,7 +16895,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -17053,7 +17082,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -17129,7 +17158,7 @@
         "履约"
       ],
       "collected_at": "2026-09-22T03:30:48.319Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 87.5,
       "match_score": 87.5,
       "evidence_confidence": 0.893,
@@ -17248,7 +17277,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -17324,7 +17353,7 @@
         "B端产品"
       ],
       "collected_at": "2026-09-15T02:58:53.661Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -17443,7 +17472,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -17527,7 +17556,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T03:39:29.438Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -17646,7 +17675,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -17714,7 +17743,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T05:05:04.416Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 85.1,
       "match_score": 85.1,
       "evidence_confidence": 1,
@@ -17833,7 +17862,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -17908,7 +17937,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T03:58:06.484Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -18027,7 +18056,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -18216,7 +18245,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -18298,7 +18327,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T04:05:13.490Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 87.5,
       "match_score": 87.5,
       "evidence_confidence": 0.893,
@@ -18417,7 +18446,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -18489,7 +18518,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-15T03:02:11.024Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -18608,7 +18637,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -18809,7 +18838,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -18890,7 +18919,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T05:03:45.711Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 85.1,
       "match_score": 85.1,
       "evidence_confidence": 1,
@@ -19009,7 +19038,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -19211,7 +19240,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -19301,7 +19330,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-21T13:37:51.689Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -19420,7 +19449,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -19511,7 +19540,7 @@
         "AI应用"
       ],
       "collected_at": "2026-09-22T02:21:01.181Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -19630,7 +19659,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -19706,7 +19735,7 @@
         "出行"
       ],
       "collected_at": "2026-09-22T03:37:22.413Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 85.1,
       "match_score": 85.1,
       "evidence_confidence": 1,
@@ -19825,7 +19854,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -20040,7 +20069,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -20118,7 +20147,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T02:28:54.798Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -20237,7 +20266,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -20452,7 +20481,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -20535,7 +20564,7 @@
         "B端产品"
       ],
       "collected_at": "2026-09-22T03:55:40.791Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -20654,7 +20683,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -20730,7 +20759,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-21T12:24:48.878Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -20849,7 +20878,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -20933,7 +20962,7 @@
         "交易"
       ],
       "collected_at": "2026-09-22T03:34:19.784Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 87.5,
       "match_score": 87.5,
       "evidence_confidence": 0.893,
@@ -21052,7 +21081,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -21258,7 +21287,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -21451,7 +21480,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -21641,7 +21670,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -21842,7 +21871,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -22049,7 +22078,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -22131,7 +22160,7 @@
         "交易"
       ],
       "collected_at": "2026-09-22T04:58:38.437Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -22250,7 +22279,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -22319,7 +22348,7 @@
         "交易"
       ],
       "collected_at": "2026-09-22T05:07:37.540Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -22438,7 +22467,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -22513,7 +22542,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T04:56:47.981Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -22632,7 +22661,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -22713,7 +22742,7 @@
         "用户增长"
       ],
       "collected_at": "2026-09-21T12:52:15.897Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -22832,7 +22861,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -23040,7 +23069,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -23124,7 +23153,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T05:03:06.542Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -23243,7 +23272,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -23318,7 +23347,7 @@
         "交易"
       ],
       "collected_at": "2026-09-22T03:55:10.097Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.5,
       "match_score": 92.5,
       "evidence_confidence": 0.964,
@@ -23437,7 +23466,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -23627,7 +23656,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -23699,7 +23728,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-21T12:38:19.182Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 85.1,
       "match_score": 85.1,
       "evidence_confidence": 1,
@@ -23818,7 +23847,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -23900,7 +23929,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T03:29:49.727Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -24019,7 +24048,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -24216,7 +24245,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -24299,7 +24328,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T03:32:21.752Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 85.1,
       "match_score": 85.1,
       "evidence_confidence": 1,
@@ -24418,7 +24447,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -24520,7 +24549,7 @@
         "B端产品"
       ],
       "collected_at": "2026-09-21T12:38:43.698Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 85.1,
       "match_score": 85.1,
       "evidence_confidence": 1,
@@ -24639,7 +24668,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -24721,7 +24750,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T05:01:25.477Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 87.5,
       "match_score": 87.5,
       "evidence_confidence": 0.893,
@@ -24840,7 +24869,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -25034,7 +25063,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -25123,7 +25152,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T05:04:02.076Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -25242,7 +25271,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -25317,7 +25346,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T03:45:08.280Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -25436,7 +25465,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -25512,7 +25541,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-15T03:02:28.384Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -25631,7 +25660,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -25715,7 +25744,7 @@
         "交易"
       ],
       "collected_at": "2026-09-21T13:31:29.586Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 85.1,
       "match_score": 85.1,
       "evidence_confidence": 1,
@@ -25834,7 +25863,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -26034,7 +26063,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -26224,7 +26253,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -26292,7 +26321,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T05:00:31.057Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -26411,7 +26440,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -26603,7 +26632,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -26686,7 +26715,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T03:57:38.255Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.5,
       "match_score": 92.5,
       "evidence_confidence": 0.964,
@@ -26805,7 +26834,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -27017,7 +27046,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -27090,7 +27119,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T03:41:50.486Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 90,
       "match_score": 90,
       "evidence_confidence": 0.726,
@@ -27209,7 +27238,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -27402,7 +27431,7 @@
       "hard_filter_reasons": [
         "direction_fit=excluded"
       ],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -27483,7 +27512,7 @@
         "B端产品"
       ],
       "collected_at": "2026-09-21T12:56:41.806Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 85.1,
       "match_score": 85.1,
       "evidence_confidence": 1,
@@ -27602,7 +27631,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -27802,7 +27831,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -27881,7 +27910,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T04:59:59.099Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.5,
       "match_score": 92.5,
       "evidence_confidence": 0.964,
@@ -28000,7 +28029,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -28084,7 +28113,7 @@
         "内容产品"
       ],
       "collected_at": "2026-09-15T03:01:27.320Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -28203,7 +28232,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -28291,7 +28320,7 @@
         "内容产品"
       ],
       "collected_at": "2026-09-22T04:56:30.533Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -28410,7 +28439,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -28487,7 +28516,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T03:57:52.151Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 90.5,
       "match_score": 90.5,
       "evidence_confidence": 0.762,
@@ -28606,7 +28635,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -28795,7 +28824,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -28878,7 +28907,7 @@
         "B端产品"
       ],
       "collected_at": "2026-09-21T12:32:38.032Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -28997,7 +29026,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -29200,7 +29229,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -29285,7 +29314,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-21T12:45:14.834Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 87.5,
       "match_score": 87.5,
       "evidence_confidence": 0.893,
@@ -29404,7 +29433,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -29487,7 +29516,7 @@
         "交易"
       ],
       "collected_at": "2026-09-21T13:34:26.987Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 87.5,
       "match_score": 87.5,
       "evidence_confidence": 0.893,
@@ -29606,7 +29635,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -29705,7 +29734,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-21T10:56:22.526Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -29824,7 +29853,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -29921,7 +29950,7 @@
         "内容产品"
       ],
       "collected_at": "2026-09-22T03:37:37.798Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 85.1,
       "match_score": 85.1,
       "evidence_confidence": 1,
@@ -30040,7 +30069,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -30118,7 +30147,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T04:02:52.837Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 85.1,
       "match_score": 85.1,
       "evidence_confidence": 1,
@@ -30237,7 +30266,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -30305,7 +30334,7 @@
         "履约"
       ],
       "collected_at": "2026-09-22T03:43:24.172Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 85.1,
       "match_score": 85.1,
       "evidence_confidence": 1,
@@ -30424,7 +30453,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -30499,7 +30528,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-21T12:33:09.361Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -30618,7 +30647,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -30826,7 +30855,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -30903,7 +30932,7 @@
         "内容产品"
       ],
       "collected_at": "2026-09-22T03:54:46.874Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.5,
       "match_score": 92.5,
       "evidence_confidence": 0.964,
@@ -31022,7 +31051,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -31105,7 +31134,7 @@
         "用户产品"
       ],
       "collected_at": "2026-09-22T03:47:18.894Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -31224,7 +31253,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -31292,7 +31321,7 @@
         "用户增长"
       ],
       "collected_at": "2026-09-22T03:50:06.209Z",
-      "recommendation": "优先推荐",
+      "recommendation": "可以考虑",
       "score": 92.7,
       "match_score": 92.7,
       "evidence_confidence": 1,
@@ -31411,7 +31440,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "中",
       "title_fit": "高",
       "pipeline": "ocr_jd",
@@ -31606,7 +31635,7 @@
         }
       ],
       "hard_filter_reasons": [],
-      "scoring_config_version": "matching-v2.0.0",
+      "scoring_config_version": "matching-v2.1.0",
       "responsibility_fit": "高",
       "title_fit": "高",
       "pipeline": "ocr_jd",

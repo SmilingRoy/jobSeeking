@@ -65,7 +65,7 @@ await atomicWriteJson(existingPath, {
     pipeline: "ocr_jd",
     job_count: mergedJobs.length,
     updated_at: new Date().toISOString(),
-    scoring_algorithm_version: "matching-v2.0.0",
+    scoring_algorithm_version: "matching-v2.1.0",
     preference_version: "shanghai-pm-preferences-v1.0.0",
     direction_taxonomy_version: "product-directions-v2.0.0",
     direction_counts: directionCounts,

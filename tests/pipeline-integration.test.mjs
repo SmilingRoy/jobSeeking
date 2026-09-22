@@ -204,7 +204,7 @@ test("scoring is deterministic, versioned, and explainable", () => {
   const second = scoreJob(ocrJob());
   assert.deepEqual(first, second);
   assert.equal(first.score_components.length, 16);
-  assert.equal(first.scoring_config_version, "matching-v2.0.0");
+  assert.equal(first.scoring_config_version, "matching-v2.1.0");
   assert.equal(first.hard_filter_reasons.length, 0);
   assert.ok(first.match_score >= 0 && first.match_score <= 100);
   assert.ok(first.evidence_confidence >= 0.7);

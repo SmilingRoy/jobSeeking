@@ -169,7 +169,7 @@ def evaluation_for(title: str, detail: str, directions: list[str], experience: s
         ]
     ) if responsibility != UNKNOWN else 0
     has_delivery_loop = responsibility != UNKNOWN and any(value in responsibility for value in ["上线", "落地", "迭代", "验证"])
-    responsibility_fit = "high" if responsibility_categories >= 2 and has_delivery_loop else ("medium" if responsibility != UNKNOWN else "unknown")
+    responsibility_fit = "high" if responsibility_categories >= 3 and has_delivery_loop else ("medium" if responsibility != UNKNOWN else "unknown")
     return {
         "title_fit": "preferred" if "产品经理" in title else "unknown",
         "city_fit": "match",
@@ -337,7 +337,7 @@ def map_scored_jobs(scored: dict[str, Any]) -> list[dict[str, Any]]:
     config_version = str(
         scored_metadata.get("scoring_config_version")
         or scored_metadata.get("scoring_algorithm_version")
-        or "matching-v2.0.0"
+        or "matching-v2.1.0"
     )
     mapped: list[dict[str, Any]] = []
     for job in scored.get("jobs", []):

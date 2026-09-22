@@ -15,7 +15,7 @@ for (const job of jobs) {
 payload.metadata = {
   ...(payload.metadata ?? {}),
   job_count: jobs.length,
-  scoring_algorithm_version: "matching-v2.0.0",
+  scoring_algorithm_version: "matching-v2.1.0",
   preference_version: "shanghai-pm-preferences-v1.0.0",
   rescored_at: new Date().toISOString(),
   recommendation_counts: recommendationCounts,

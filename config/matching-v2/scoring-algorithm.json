@@ -1,10 +1,10 @@
 {
-  "version": "matching-v2.0.0",
+  "version": "matching-v2.1.0",
   "confidence_floor_for_recommendation": 0.7,
   "thresholds": {
-    "preferred": 85,
-    "consider": 70,
-    "review": 55
+    "preferred": 94,
+    "consider": 80,
+    "review": 65
   },
   "dimensions": {
     "title_fit": {"preferred": 1, "conditional": 0.65, "excluded": 0, "unknown": null},

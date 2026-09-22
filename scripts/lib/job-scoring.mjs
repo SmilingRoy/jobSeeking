@@ -80,7 +80,7 @@ function inferEvaluation(job) {
     direction_fit: excluded.some((word) => text.includes(word)) ? "excluded"
       : (directions.some((value) => priority.includes(value)) || priority.some((word) => text.includes(word)) ? "priority"
         : (directions.some((value) => adjacent.includes(value)) || adjacent.some((word) => text.includes(word)) ? "adjacent" : "unknown")),
-    responsibility_fit: responsibilityCategories >= 2 && hasDeliveryLoop ? "high" : (responsibilityCategories ? "medium" : "unknown"),
+    responsibility_fit: responsibilityCategories >= 3 && hasDeliveryLoop ? "high" : (responsibilityCategories ? "medium" : "unknown"),
     product_form_fit: cSide ? "priority" : (bSide ? "conditional" : "unknown"),
     product_layer_fit: text.includes("核心链路") || text.includes("交易链路") ? "priority" : (bSide ? "conditional" : "unknown"),
     role_fit: String(job.title ?? "").includes("产品经理") ? "preferred" : "unknown",

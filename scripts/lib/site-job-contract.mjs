@@ -33,7 +33,7 @@ export const CONTRACT_ARRAY_FIELDS = Object.freeze([
   "hard_filter_reasons",
 ]);
 
-export const DEFAULT_SCORING_CONFIG_VERSION = "matching-v2.0.0";
+export const DEFAULT_SCORING_CONFIG_VERSION = "matching-v2.1.0";
 
 const allowedRecommendations = new Set(RECOMMENDATIONS);
 const allowedPipelines = new Set(PIPELINES);

@@ -64,7 +64,7 @@ class MatchingV2Tests(unittest.TestCase):
             )
             self.assertEqual(completed.returncode, 0, completed.stderr)
             document = json.loads(output.read_text(encoding="utf-8"))
-            self.assertEqual(document["metadata"]["scoring_algorithm_version"], "matching-v2.0.0")
+            self.assertEqual(document["metadata"]["scoring_algorithm_version"], "matching-v2.1.0")
             self.assertEqual(document["metadata"]["preference_version"], "shanghai-pm-preferences-v1.0.0")
             self.assertEqual(len(document["jobs"][0]["score_components"]), 16)
             self.assertLessEqual(len(document["jobs"][0]["positive_evidence"]), 3)
