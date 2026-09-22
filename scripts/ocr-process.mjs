@@ -50,12 +50,22 @@ const existing = JSON.parse(await readFile(existingPath, "utf8"));
 const current = JSON.parse(await readFile(output, "utf8"));
 const mergedJobs = mergePipelineJobs(existing, current);
 await mkdir(join(root, "data"), { recursive: true });
+const directionCounts = {};
+for (const job of mergedJobs) {
+  for (const direction of Array.isArray(job.directions) ? job.directions : []) {
+    directionCounts[direction] = (directionCounts[direction] ?? 0) + 1;
+  }
+}
 await atomicWriteJson(existingPath, {
   metadata: {
     source: "BOSS Chrome Vision OCR",
     pipeline: "ocr_jd",
     job_count: mergedJobs.length,
     updated_at: new Date().toISOString(),
+    scoring_algorithm_version: "matching-v2.0.0",
+    preference_version: "shanghai-pm-preferences-v1.0.0",
+    direction_taxonomy_version: "product-directions-v2.0.0",
+    direction_counts: directionCounts,
   },
   jobs: mergedJobs,
 });

@@ -333,7 +333,12 @@ def map_scored_jobs(scored: dict[str, Any]) -> list[dict[str, Any]]:
         "不推荐": "不推荐",
     }
     fit_map = {"high": "高", "medium": "中", "low": "低", "excluded": "低", "unknown": "unknown"}
-    config_version = str(scored.get("metadata", {}).get("scoring_config_version", "legacy-scoring-unknown"))
+    scored_metadata = scored.get("metadata", {})
+    config_version = str(
+        scored_metadata.get("scoring_config_version")
+        or scored_metadata.get("scoring_algorithm_version")
+        or "matching-v2.0.0"
+    )
     mapped: list[dict[str, Any]] = []
     for job in scored.get("jobs", []):
         evaluation = job.get("evaluation", {})
@@ -351,16 +356,18 @@ def map_scored_jobs(scored: dict[str, Any]) -> list[dict[str, Any]]:
         if review_reasons or evidence_confidence < 0.7:
             recommendation = "信息不足"
         scoring = job.get("scoring") if isinstance(job.get("scoring"), dict) else {}
-        component_points = scoring.get("components") if isinstance(scoring.get("components"), dict) else {}
-        score_components = [
-            {
-                "dimension": dimension,
-                "classification": classification,
-                "known": classification not in (None, "", UNKNOWN),
-                "points": component_points.get(dimension),
-            }
-            for dimension, classification in evaluation.items()
-        ]
+        score_components = job.get("score_components") if isinstance(job.get("score_components"), list) else []
+        if not score_components:
+            component_points = scoring.get("components") if isinstance(scoring.get("components"), dict) else {}
+            score_components = [
+                {
+                    "dimension": dimension,
+                    "classification": classification,
+                    "known": classification not in (None, "", UNKNOWN),
+                    "points": component_points.get(dimension),
+                }
+                for dimension, classification in evaluation.items()
+            ]
         match_score = job.get("match_score")
         job_url = job["job_url"]
         url_match = re.search(r"/job_detail/([^/]+)\.html$", str(job_url), re.IGNORECASE)
