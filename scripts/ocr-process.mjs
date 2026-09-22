@@ -5,6 +5,7 @@ import { join, resolve } from "node:path";
 import { spawn } from "node:child_process";
 import { atomicWriteJson } from "./lib/ocr-capture.mjs";
 import { mergePipelineJobs } from "./lib/merge-pipeline-jobs.mjs";
+import { writeProcessingStatus } from "./lib/ocr-batch-status.mjs";
 
 const root = resolve(".");
 
@@ -35,15 +36,17 @@ const screenshots = join(runDir, "screenshots");
 const output = join(runDir, "jobs.json");
 if (!existsSync(manifestPath) || !existsSync(screenshots)) throw new Error(`批次目录不完整：${runDir}`);
 
-const python = existsSync(join(root, ".venv/bin/python")) ? join(root, ".venv/bin/python") : "python3";
-await run(python, [
-  "scripts/run-ocr-pipeline.py",
-  "--manifest", manifestPath,
-  "--screenshots", screenshots,
-  "--work-dir", runDir,
-  "--output", output,
-  "--workers", String(options.workers),
-]);
+await writeProcessingStatus(runDir, "processing", { run_id: options.run, output });
+try {
+  const python = existsSync(join(root, ".venv/bin/python")) ? join(root, ".venv/bin/python") : "python3";
+  await run(python, [
+    "scripts/run-ocr-pipeline.py",
+    "--manifest", manifestPath,
+    "--screenshots", screenshots,
+    "--work-dir", runDir,
+    "--output", output,
+    "--workers", String(options.workers),
+  ]);
 
 const existingPath = join(root, "data/jobs.json");
 const existing = JSON.parse(await readFile(existingPath, "utf8"));
@@ -69,4 +72,15 @@ await atomicWriteJson(existingPath, {
   },
   jobs: mergedJobs,
 });
-console.log(`OCR batch processed: ${current.jobs.length} jobs; merged total: ${mergedJobs.length}`);
+  await writeProcessingStatus(runDir, "processed", {
+    run_id: options.run,
+    captured_jobs: JSON.parse(await readFile(manifestPath, "utf8")).jobs?.length ?? 0,
+    processed_jobs: current.jobs.length,
+    merged_total: mergedJobs.length,
+    review_count: JSON.parse(await readFile(join(runDir, "review-queue.json"), "utf8")).jobs?.length ?? 0,
+  });
+  console.log(`OCR batch processed: ${current.jobs.length} jobs; merged total: ${mergedJobs.length}`);
+} catch (error) {
+  await writeProcessingStatus(runDir, "failed", { run_id: options.run, error: error instanceof Error ? error.message : String(error) });
+  throw error;
+}

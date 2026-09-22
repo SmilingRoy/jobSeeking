@@ -46,6 +46,10 @@ export async function createRun(root, requestedRunId) {
     jobs: [],
   };
   await atomicWriteJson(join(runDir, "manifest.json"), manifest);
+  await atomicWriteJson(join(runDir, "processing-status.json"), {
+    status: "unprocessed",
+    updated_at: new Date().toISOString(),
+  });
   return { runId, runDir, screenshotsDir, manifest };
 }
 
