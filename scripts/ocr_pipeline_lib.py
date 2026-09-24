@@ -353,6 +353,8 @@ def map_scored_jobs(scored: dict[str, Any]) -> list[dict[str, Any]]:
         capture_factor = 1.0 if job.get("verification_status") == "captured_jd" and complete_jd else 0.55
         evidence_confidence = round(known_dimensions / dimension_count * capture_factor, 3)
         recommendation = labels.get(job.get("recommendation"), "信息不足")
+        if recommendation == "谨慎评估":
+            recommendation = "不推荐"
         if review_reasons or evidence_confidence < 0.7:
             recommendation = "信息不足"
         scoring = job.get("scoring") if isinstance(job.get("scoring"), dict) else {}

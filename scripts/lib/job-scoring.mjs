@@ -165,7 +165,6 @@ export function scoreJob(job, config = scoringConfig) {
   else if (job.verification_status === "captured_jd" && completeJd) {
     if (matchScore >= config.thresholds.preferred) recommendation = "优先推荐";
     else if (matchScore >= config.thresholds.consider) recommendation = "可以考虑";
-    else if (matchScore >= config.thresholds.review) recommendation = "谨慎评估";
     else recommendation = "不推荐";
   }
   if (evidenceConfidence < config.confidence_floor_for_recommendation && recommendation === "优先推荐") {

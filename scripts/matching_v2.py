@@ -128,8 +128,6 @@ def score_job(job: dict[str, Any], algorithm: dict[str, Any], preferences: dict[
         recommendation = "优先推荐"
     elif match_score >= threshold["consider"]:
         recommendation = "可以考虑"
-    elif match_score >= threshold["review"]:
-        recommendation = "谨慎评估"
     else:
         recommendation = "不推荐"
     if evidence_confidence < float(algorithm.get("confidence_floor_for_recommendation", 0.0)) and recommendation == "优先推荐":
