@@ -4,7 +4,11 @@
 
 ## 在线网站
 
-公开访问地址：[job-lens-radar.smilingroy.chatgpt.site](https://job-lens-radar.smilingroy.chatgpt.site)
+GitHub Pages 公开地址：[smilingroy.github.io/jobSeeking](https://smilingroy.github.io/jobSeeking/)
+
+备用地址：[job-lens-radar.smilingroy.chatgpt.site](https://job-lens-radar.smilingroy.chatgpt.site)
+
+推送到 `main` 分支后，GitHub Actions 会自动构建并发布 GitHub Pages，工作流位于 `.github/workflows/deploy-github-pages.yml`。
 
 项目仓库：[github.com/SmilingRoy/jobSeeking](https://github.com/SmilingRoy/jobSeeking)
 
